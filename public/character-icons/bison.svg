@@ -1,0 +1,17 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="180" height="180" rx="28" fill="#F7FBFF"/>
+  <path d="M90 10L153 47V121L90 158L27 121V47L90 10Z" fill="#061833" stroke="#21B4FF" stroke-width="4"/>
+  <path d="M90 18L145 51V117L90 150L35 117V51L90 18Z" fill="#0E1730" stroke="#B73EFF" stroke-width="2"/>
+  <path d="M35 129V32H145V129" stroke="#05A8FF" stroke-width="8"/>
+  <path d="M58 62C61 42 75 28 95 28C114 28 127 37 132 53C125 50 119 49 113 49C110 49 105 50 100 51C94 43 82 42 72 46L58 62Z" fill="#1E274C"/>
+  <path d="M47 67C60 48 76 40 104 41C123 42 135 51 140 66L135 112C120 126 101 134 78 132C62 130 50 122 42 109L47 67Z" fill="#2F3657"/>
+  <path d="M78 67C88 58 105 56 114 62C119 66 121 73 121 82C121 98 113 112 104 119C98 124 90 126 81 124C68 121 60 108 60 94C60 83 65 75 78 67Z" fill="#AD815B"/>
+  <path d="M71 92C75 89 80 88 84 88C82 93 79 97 74 99C70 100 68 97 71 92Z" fill="#F7F9FF"/>
+  <path d="M101 89C106 86 111 86 115 87C113 93 109 98 104 100C100 101 98 95 101 89Z" fill="#F7F9FF"/>
+  <path d="M82 108C88 106 95 106 102 108C99 113 93 116 87 116C82 116 79 113 82 108Z" fill="#6A2A2E"/>
+  <path d="M65 74L73 68L70 116L58 111L65 74Z" fill="#3D2853"/>
+  <path d="M116 69L122 66L118 110L111 116L116 69Z" fill="#DCC8CE"/>
+  <path d="M89 130C111 130 127 139 135 160H56C61 141 71 130 89 130Z" fill="#A92F2A"/>
+  <path d="M112 143H164V171H112V143Z" fill="#912154"/>
+  <text x="138" y="167" text-anchor="middle" fill="#FFFEE5" font-size="34" font-family="Arial Black, Arial, sans-serif">BISON</text>
+</svg>

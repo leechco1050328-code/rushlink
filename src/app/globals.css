@@ -1,0 +1,351 @@
+@import "tailwindcss";
+
+:root {
+  --background: #081119;
+  --foreground: #f5f8fc;
+  --muted: #b5c0d4;
+  --surface: rgba(14, 23, 35, 0.76);
+  --surface-strong: rgba(12, 20, 30, 0.92);
+  --line: rgba(255, 255, 255, 0.12);
+  --accent: #1f6feb;
+  --accent-soft: #8fd3ff;
+  --secondary: #ffb35b;
+  --panel-shadow:
+    0 34px 86px rgba(1, 6, 12, 0.34),
+    0 12px 28px rgba(7, 17, 26, 0.24);
+  --panel-inner: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Yu Gothic", "Hiragino Sans", "Meiryo", sans-serif;
+  --font-mono: "Consolas", "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Yu Gothic", "Hiragino Sans", "Meiryo", sans-serif;
+  background-image:
+    linear-gradient(180deg, rgba(3, 8, 12, 0.14), rgba(3, 8, 12, 0.14)),
+    url("/brand-background.svg"),
+    linear-gradient(180deg, #09131b 0%, #0b1520 46%, #0b1219 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: top center, top center, top center;
+  background-size: 100% 420px, 100% 420px, cover;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(28px);
+}
+
+body::before {
+  top: 118px;
+  left: -72px;
+  width: 280px;
+  height: 280px;
+  background: rgba(120, 214, 255, 0.12);
+}
+
+body::after {
+  top: 420px;
+  right: -96px;
+  width: 360px;
+  height: 360px;
+  background: rgba(240, 138, 43, 0.12);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(143, 211, 255, 0.28);
+  color: #fff;
+}
+
+.grid-noise {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), transparent);
+}
+
+.panel {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at top right, rgba(255, 180, 91, 0.08), transparent 32%);
+  box-shadow: var(--panel-inner);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.display {
+  font-family: "Bahnschrift", "Arial Narrow", "Impact", sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.accent-ring {
+  position: relative;
+}
+
+.accent-ring::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background:
+    linear-gradient(135deg, rgba(31, 111, 235, 0.9), rgba(95, 168, 255, 0.72), rgba(15, 132, 200, 0.68));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.metal-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 111, 235, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(229, 240, 255, 0.88));
+  padding: 0.5rem 0.9rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 10px 20px rgba(78, 124, 188, 0.08);
+}
+
+.hero-cut {
+  position: relative;
+}
+
+.hero-cut::after {
+  content: "";
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  width: 92px;
+  height: 92px;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom-right-radius: 1.75rem;
+  pointer-events: none;
+}
+
+.hero-banner {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2.5rem;
+  background:
+    linear-gradient(180deg, rgba(6, 14, 20, 0.42), rgba(6, 14, 20, 0.18)),
+    url("/brand-background.svg") center/cover no-repeat;
+  box-shadow:
+    0 34px 86px rgba(13, 27, 42, 0.28),
+    0 12px 28px rgba(28, 60, 98, 0.18);
+}
+
+.hero-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(7, 15, 22, 0.7) 0%, rgba(7, 15, 22, 0.18) 52%, rgba(255, 153, 64, 0.08) 100%),
+    radial-gradient(circle at top left, rgba(135, 215, 255, 0.16), transparent 28%);
+  pointer-events: none;
+}
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08)),
+    rgba(7, 17, 26, 0.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 18px 44px rgba(7, 15, 22, 0.22);
+}
+
+.hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(255, 211, 107, 0.12), transparent 32%);
+  pointer-events: none;
+}
+
+.soft-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+}
+
+.pill-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1;
+}
+
+.primary-action {
+  display: inline-flex;
+  min-height: 3.4rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(18, 87, 192, 0.16);
+  background:
+    linear-gradient(180deg, #2f7cff 0%, #1f6feb 52%, #165fd0 100%);
+  padding: 0.9rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  box-shadow:
+    0 20px 36px rgba(31, 111, 235, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.primary-action:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 24px 42px rgba(31, 111, 235, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.primary-action:disabled {
+  opacity: 0.6;
+  transform: none;
+  box-shadow:
+    0 14px 28px rgba(31, 111, 235, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.secondary-action {
+  display: inline-flex;
+  min-height: 3.2rem;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.07));
+  padding: 0.85rem 1.35rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow:
+    0 12px 24px rgba(6, 12, 18, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition:
+    transform 140ms ease,
+    background 140ms ease;
+}
+
+.secondary-action:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.1));
+}
+
+.panel .text-white,
+.panel .text-white\/90,
+.panel .text-white\/80 {
+  color: var(--foreground) !important;
+}
+
+.panel .text-\[var\(--muted\)\],
+.panel .text-\[var\(--muted\)\]\/80 {
+  color: var(--muted) !important;
+}
+
+.panel .text-\[var\(--accent-soft\)\],
+.panel .text-\[var\(--secondary\)\] {
+  color: var(--accent-soft) !important;
+}
+
+.panel .bg-black\/20,
+.panel .bg-black\/25,
+.panel .bg-white\/5,
+.panel .bg-white\/6,
+.panel .bg-white\/8 {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)) !important;
+}
+
+.panel .border-white\/10,
+.panel .border-white\/12,
+.panel .border-white\/15 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.panel input,
+.panel select,
+.panel textarea {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: var(--foreground) !important;
+}
+
+.panel input::placeholder,
+.panel textarea::placeholder {
+  color: rgba(181, 192, 212, 0.72) !important;
+}
+
+.panel option {
+  color: var(--foreground);
+  background: #0f1823;
+}

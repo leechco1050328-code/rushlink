@@ -1,0 +1,22 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="180" height="180" rx="28" fill="#F7FBFF"/>
+  <rect x="0" y="0" width="46" height="180" fill="#004B73"/>
+  <rect x="66" y="0" width="48" height="180" fill="#6A16FF"/>
+  <rect x="114" y="0" width="33" height="180" fill="#FF315E"/>
+  <rect x="147" y="0" width="33" height="180" fill="#005A86"/>
+  <path d="M90 10L153 47V121L90 158L27 121V47L90 10Z" fill="#061833" stroke="#21B4FF" stroke-width="4"/>
+  <path d="M90 18L145 51V117L90 150L35 117V51L90 18Z" fill="#0E1730" stroke="#AFC7E8" stroke-width="2"/>
+  <path d="M47 70C52 54 64 43 80 39C95 35 121 35 142 45L146 66C131 68 112 69 92 69C75 69 59 70 47 70Z" fill="#E33B16"/>
+  <path d="M65 51H130C132 51 134 53 134 55V73C134 75 132 77 130 77H65C63 77 61 75 61 73V55C61 53 63 51 65 51Z" fill="#FFFDF7"/>
+  <path d="M58 73C67 62 79 56 96 55C88 65 89 84 89 100C89 126 84 143 72 154C59 147 51 134 50 119L58 73Z" fill="#F7CF45"/>
+  <path d="M101 73C106 67 114 64 121 65C132 66 140 74 141 86C142 100 139 115 131 129C123 142 113 150 99 154C98 133 99 110 99 93C99 84 100 78 101 73Z" fill="#F7D842"/>
+  <path d="M113 96C118 92 126 92 131 94C128 99 123 103 117 103C112 103 109 100 113 96Z" fill="#161520"/>
+  <path d="M76 96C80 92 87 91 92 92C90 98 85 102 79 102C75 102 73 99 76 96Z" fill="#161520"/>
+  <path d="M83 118C89 116 96 116 102 118C100 122 95 124 90 124C85 124 81 122 83 118Z" fill="#6F3C34"/>
+  <path d="M58 139C67 134 74 131 84 131L73 171H39L58 139Z" fill="#FFC553"/>
+  <path d="M88 130H106C117 130 126 137 132 150L140 171H76L88 130Z" fill="#C41E11"/>
+  <path d="M55 134L74 140L69 154L47 149L55 134Z" fill="#28292F"/>
+  <path d="M89 132L100 139L99 168H86L89 132Z" fill="#FFF9EB"/>
+  <path d="M103 141H164V171H103V141Z" fill="#8A2D6D"/>
+  <text x="134" y="167" text-anchor="middle" fill="#FFFEE5" font-size="34" font-family="Arial Black, Arial, sans-serif">TERRY</text>
+</svg>
