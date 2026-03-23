@@ -18,7 +18,7 @@ export default async function AuthPage({
           backHref="/"
           kicker="Entry"
           title="ユーザー登録とログイン"
-          description="Street Fighter 6 の対戦募集やリプレイ相談を始めるための入口です。新規登録、ログイン、パスワード再設定をこのページで行えます。"
+          description="Street Fighter 6 の対戦募集、教えたい / 教わりたい募集、リプレイコーチングに参加するための認証ページです。"
         />
 
         <AuthPanel initialMode={initialMode} />

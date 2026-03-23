@@ -18,7 +18,7 @@ export default async function BoardPage({
           backHref="/#board"
           kicker="Community Board"
           title="募集一覧"
-          description="Street Fighter 6 のランク帯、MR帯、通話あり/なし、教えたい/教わりたいを見ながら募集を探せます。10件ずつ表示しています。"
+          description="Street Fighter 6 の対戦募集と、教えたい / 教わりたい募集を一覧で確認できます。10件ずつ表示しています。"
         />
 
         <CommunityBoard

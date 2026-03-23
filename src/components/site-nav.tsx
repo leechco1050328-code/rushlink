@@ -45,6 +45,7 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
     startTransition(async () => {
       await supabase.auth.signOut();
       setSession(null);
+      window.location.href = "/";
     });
   }
 
@@ -61,14 +62,19 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
       }`}
     >
       {session?.user ? (
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isPending}
-          className={`${pillClass} disabled:opacity-60`}
-        >
-          ログアウト
-        </button>
+        <>
+          <Link href="/my-posts" className={pillClass}>
+            自分の投稿
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isPending}
+            className={`${pillClass} disabled:opacity-60`}
+          >
+            ログアウト
+          </button>
+        </>
       ) : (
         <>
           <Link href="/auth" className={pillClass}>

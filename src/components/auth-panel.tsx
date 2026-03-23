@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import {
   getMissingSupabaseEnv,
@@ -15,7 +16,7 @@ function getMessageFromError(error: unknown) {
     return error.message;
   }
 
-  return "不明なエラーが発生しました。";
+  return "予期しないエラーが発生しました。";
 }
 
 export function AuthPanel({
@@ -23,23 +24,24 @@ export function AuthPanel({
 }: {
   initialMode?: Mode;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const supabase = getSupabaseBrowserClient();
   const isConfigured = hasSupabaseEnv();
   const missingEnv = getMissingSupabaseEnv();
+  const origin =
+    typeof window === "undefined" ? "http://localhost:3000" : window.location.origin;
 
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [message, setMessage] = useState(
-    "Supabase をつなぐと、ここで本物のユーザー登録ができます。",
-  );
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(isConfigured);
+  const [message, setMessage] = useState(
+    "メールアドレスとパスワードで登録できます。ログインするとトップページへ戻ります。",
+  );
   const [isPending, startTransition] = useTransition();
-
-  const origin =
-    typeof window === "undefined" ? "http://localhost:3000" : window.location.origin;
 
   useEffect(() => {
     setMode(initialMode);
@@ -51,12 +53,12 @@ export function AuthPanel({
       return;
     }
 
-    let isMounted = true;
+    let mounted = true;
 
     supabase.auth
       .getSession()
       .then(({ data, error }) => {
-        if (!isMounted) {
+        if (!mounted) {
           return;
         }
 
@@ -69,7 +71,7 @@ export function AuthPanel({
         setSessionLoading(false);
       })
       .catch((error: unknown) => {
-        if (!isMounted) {
+        if (!mounted) {
           return;
         }
 
@@ -84,16 +86,23 @@ export function AuthPanel({
     });
 
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [supabase]);
+
+  function goTop() {
+    if (pathname !== "/") {
+      router.replace("/");
+      router.refresh();
+    }
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!supabase) {
-      setMessage("先に .env.local に Supabase の接続情報を入れてください。");
+      setMessage("`.env.local` に Supabase の設定を入れると利用できます。");
       return;
     }
 
@@ -105,7 +114,7 @@ export function AuthPanel({
             password,
             options: {
               data: {
-                display_name: displayName,
+                display_name: displayName.trim(),
               },
             },
           });
@@ -117,22 +126,24 @@ export function AuthPanel({
           setSession(data.session);
           setMessage(
             data.session
-              ? "登録が完了し、そのままログインしました。"
-              : "登録メールを送信しました。受信したメールのリンクを開いて登録を完了してください。",
+              ? "登録が完了しました。プロフィールを設定して使い始められます。"
+              : "確認メールを送信しました。メール内リンクを開いて登録を完了してください。",
           );
-        } else {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (error) {
-            throw error;
-          }
-
-          setSession(data.session);
-          setMessage("ログインしました。");
+          return;
         }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        setSession(data.session);
+        setMessage("ログインしました。トップページへ移動します。");
+        goTop();
       } catch (error: unknown) {
         setMessage(`認証に失敗しました: ${getMessageFromError(error)}`);
       }
@@ -159,18 +170,18 @@ export function AuthPanel({
 
   function handlePasswordReset() {
     if (!supabase) {
-      setMessage("先に .env.local に Supabase の接続情報を入れてください。");
+      setMessage("`.env.local` に Supabase の設定を入れると利用できます。");
       return;
     }
 
-    if (!email) {
+    if (!email.trim()) {
       setMessage("先にメールアドレスを入力してください。");
       return;
     }
 
     startTransition(async () => {
       try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: `${origin}/auth/update-password`,
         });
 
@@ -178,9 +189,7 @@ export function AuthPanel({
           throw error;
         }
 
-        setMessage(
-          "パスワード再設定メールを送信しました。メール内のリンクから新しいパスワードを設定してください。",
-        );
+        setMessage("パスワード再設定メールを送信しました。");
       } catch (error: unknown) {
         setMessage(`再設定メール送信に失敗しました: ${getMessageFromError(error)}`);
       }
@@ -191,10 +200,9 @@ export function AuthPanel({
     <section className="panel rounded-[30px] px-6 py-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="display text-2xl text-white">ユーザー登録</p>
+          <p className="display text-2xl text-white">ユーザー登録 / ログイン</p>
           <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            メールアドレスとパスワードで登録できます。今は MVP として、まずは
-            認証だけを先に入れています。
+            Street Fighter 6 の対戦募集とリプレイコーチングに参加するための認証ページです。
           </p>
         </div>
         <span
@@ -211,25 +219,30 @@ export function AuthPanel({
       {!isConfigured ? (
         <div className="mt-6 space-y-4 rounded-[24px] border border-white/10 bg-black/20 p-5">
           <p className="text-sm leading-7 text-[var(--muted)]">
-            まだ Supabase の接続情報が入っていません。次の 3 つを済ませると、
-            下の登録フォームが本当に使えるようになります。
+            Supabase と接続すると本物の会員登録が使えます。
           </p>
-          <ol className="space-y-2 text-sm leading-7 text-[var(--muted)]">
-            <li>1. Supabase で新しいプロジェクトを作る</li>
-            <li>2. `.env.local.example` を参考に `.env.local` を作る</li>
-            <li>3. Project URL と Publishable key を貼り付ける</li>
-          </ol>
           <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 text-sm text-[var(--muted)]">
-            不足している環境変数: {missingEnv.join(", ")}
+            未設定の環境変数: {missingEnv.join(", ")}
           </div>
-          <a
-            href="#setup"
-            className="secondary-action w-fit text-sm"
-          >
-            設定手順を見る
-          </a>
         </div>
-      ) : session?.user ? null : (
+      ) : session?.user ? (
+        <div className="mt-6 rounded-[24px] border border-white/10 bg-black/20 p-5">
+          <p className="text-sm text-[var(--muted)]">現在ログイン中です。</p>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+            メール: {session.user.email}
+            <br />
+            表示名: {String(session.user.user_metadata.display_name ?? "").trim() || "未設定"}
+          </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isPending}
+            className="secondary-action mt-5 text-sm disabled:opacity-60"
+          >
+            ログアウト
+          </button>
+        </div>
+      ) : (
         <div className="mt-6 space-y-5">
           <div className="flex gap-3 text-sm">
             <button
@@ -241,7 +254,7 @@ export function AuthPanel({
                   : "border border-white/10 bg-white/5 text-[var(--muted)]"
               }`}
             >
-              新規登録
+              ユーザー登録
             </button>
             <button
               type="button"
@@ -259,23 +272,19 @@ export function AuthPanel({
           <form className="space-y-4" onSubmit={handleSubmit}>
             {mode === "sign-up" ? (
               <label className="block">
-                <span className="mb-2 block text-sm text-[var(--muted)]">
-                  表示名
-                </span>
+                <span className="mb-2 block text-sm text-[var(--muted)]">表示名</span>
                 <input
                   value={displayName}
                   onChange={(event) => setDisplayName(event.target.value)}
                   className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-                  placeholder="例: Kaito"
+                  placeholder="例: RushLink Jamie"
                   required
                 />
               </label>
             ) : null}
 
             <label className="block">
-              <span className="mb-2 block text-sm text-[var(--muted)]">
-                メールアドレス
-              </span>
+              <span className="mb-2 block text-sm text-[var(--muted)]">メールアドレス</span>
               <input
                 type="email"
                 value={email}
@@ -287,9 +296,7 @@ export function AuthPanel({
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm text-[var(--muted)]">
-                パスワード
-              </span>
+              <span className="mb-2 block text-sm text-[var(--muted)]">パスワード</span>
               <input
                 type="password"
                 value={password}
@@ -297,28 +304,22 @@ export function AuthPanel({
                 className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
                 placeholder="8文字以上を推奨"
                 required
-                minLength={6}
               />
             </label>
 
-            <button
-              type="submit"
-              disabled={isPending}
-              className="primary-action disabled:opacity-60"
-            >
-              {isPending
-                ? "送信中..."
-                : mode === "sign-up"
-                  ? "この内容で登録する"
-                  : "ログインする"}
-            </button>
-
-            <div className="flex flex-wrap gap-3 text-sm">
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" disabled={isPending} className="primary-action disabled:opacity-60">
+                {isPending
+                  ? "送信中..."
+                  : mode === "sign-up"
+                    ? "ユーザー登録する"
+                    : "ログインする"}
+              </button>
               <button
                 type="button"
                 onClick={handlePasswordReset}
                 disabled={isPending}
-                className="secondary-action min-h-0 px-4 py-2 text-sm disabled:opacity-60"
+                className="secondary-action text-sm disabled:opacity-60"
               >
                 パスワードを忘れた
               </button>
@@ -327,40 +328,9 @@ export function AuthPanel({
         </div>
       )}
 
-      <div className="mt-5 rounded-[20px] border border-white/10 bg-white/5 p-4 text-sm leading-7 text-[var(--muted)]">
-        <p>{message}</p>
-      </div>
-
-      <div className="mt-5 rounded-[24px] border border-white/10 bg-black/20 p-5">
-        <p className="text-sm font-semibold text-white">現在のログイン状態</p>
-        {sessionLoading ? (
-          <p className="mt-3 text-sm text-[var(--muted)]">確認中...</p>
-        ) : session?.user ? (
-          <div className="mt-3 space-y-3 text-sm text-[var(--muted)]">
-            <p>メール: {session.user.email}</p>
-            <p>
-              表示名: {String(session.user.user_metadata.display_name ?? "未設定")}
-            </p>
-            <p>
-              メール確認:
-              {session.user.email_confirmed_at ? " 完了" : " 未確認"}
-            </p>
-            <p>ログイン中のため、登録フォームとログインフォームは非表示です。</p>
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={isPending}
-              className="secondary-action min-h-0 px-4 py-2 text-sm disabled:opacity-60"
-            >
-              ログアウト
-            </button>
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-[var(--muted)]">
-            まだログインしていません。
-          </p>
-        )}
-      </div>
+      <p className="mt-5 text-sm leading-7 text-[var(--muted)]">
+        {sessionLoading ? "認証状態を確認しています..." : message}
+      </p>
     </section>
   );
 }

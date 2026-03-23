@@ -61,7 +61,16 @@ create policy "replay_review_posts_insert_own"
 on public.replay_review_posts
 for insert
 to authenticated
-with check (auth.uid() = user_id);
+with check (
+  auth.uid() = user_id
+  and (
+    select count(*)
+    from public.replay_review_posts posts
+    where posts.user_id = auth.uid()
+      and posts.created_at >= timezone('utc', date_trunc('day', now()))
+      and posts.created_at < timezone('utc', date_trunc('day', now()) + interval '1 day')
+  ) < 3
+);
 
 create policy "replay_review_posts_update_own"
 on public.replay_review_posts

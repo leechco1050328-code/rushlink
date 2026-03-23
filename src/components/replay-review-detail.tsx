@@ -3,10 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useTransition, type FormEvent } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { CharacterChip } from "@/components/character-chip";
 import { ModerationActions } from "@/components/moderation-actions";
+import { PostContactChips } from "@/components/post-contact-chips";
 import { getBlockedUserIds } from "@/lib/moderation";
-import type { Session } from "@supabase/supabase-js";
+import { loadProfileContacts, type ProfileContactMap } from "@/lib/profile-contacts";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ReplayCoachingPost = {
@@ -38,7 +40,7 @@ function getMessageFromError(error: unknown) {
     return error.message;
   }
 
-  return "不明なエラーが発生しました。";
+  return "予期しないエラーが発生しました。";
 }
 
 function formatPostedAt(value: string) {
@@ -55,17 +57,18 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
   const [session, setSession] = useState<Session | null>(null);
   const [post, setPost] = useState<ReplayCoachingPost | null>(null);
   const [comments, setComments] = useState<ReplayCoachingComment[]>([]);
+  const [contacts, setContacts] = useState<ProfileContactMap>({});
   const [isBlocked, setIsBlocked] = useState(false);
   const [replyToNo, setReplyToNo] = useState<number | null>(null);
   const [commentBody, setCommentBody] = useState("");
-  const [message, setMessage] = useState("読み込み中です。");
+  const [message, setMessage] = useState("読み込み中です...");
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (!supabase) {
       setIsLoading(false);
-      setMessage("Supabase の設定情報がまだ入っていません。");
+      setMessage("Supabase の設定が入っていません。");
       return;
     }
 
@@ -76,7 +79,7 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
     }
 
     const client = supabase;
-    let isMounted = true;
+    let mounted = true;
 
     async function loadThread(nextSession?: Session | null) {
       const activeSession =
@@ -84,14 +87,12 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
         (await client.auth.getSession().then(({ data }) => data.session)) ??
         null;
 
-      if (!isMounted) {
+      if (!mounted) {
         return;
       }
 
       setSession(activeSession);
-      const blockedIds = activeSession?.user
-        ? await getBlockedUserIds(client, activeSession.user.id)
-        : [];
+      const blockedIds = activeSession?.user ? await getBlockedUserIds(client, activeSession.user.id) : [];
 
       const [postResult, commentsResult] = await Promise.all([
         client
@@ -108,30 +109,24 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
           .order("id", { ascending: true }),
       ]);
 
-      if (!isMounted) {
+      if (!mounted) {
         return;
       }
 
       if (postResult.error) {
-        setPost(null);
-        setComments([]);
-        setMessage(`投稿の読み込みに失敗しました: ${postResult.error.message}`);
+        setMessage(`読み込みに失敗しました: ${postResult.error.message}`);
         setIsLoading(false);
         return;
       }
 
       if (!postResult.data) {
-        setPost(null);
-        setComments([]);
         setMessage("投稿が見つかりません。");
         setIsLoading(false);
         return;
       }
 
       if (commentsResult.error) {
-        setPost(postResult.data as ReplayCoachingPost);
-        setComments([]);
-        setMessage(`コメントの読み込みに失敗しました: ${commentsResult.error.message}`);
+        setMessage(`コメント取得に失敗しました: ${commentsResult.error.message}`);
         setIsLoading(false);
         return;
       }
@@ -146,8 +141,15 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
         return;
       }
 
+      const nextContacts = await loadProfileContacts(client, [nextPost.user_id]);
+
+      if (!mounted) {
+        return;
+      }
+
       setIsBlocked(false);
       setPost(nextPost);
+      setContacts(nextContacts);
       setComments(
         ((commentsResult.data ?? []) as ReplayCoachingComment[]).filter(
           (comment) => !blockedIds.includes(comment.user_id),
@@ -155,38 +157,37 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
       );
       setMessage(
         activeSession?.user
-          ? "コメントできます。返信する場合は対象コメントの返信リンクを押してください。"
+          ? "コメントできます。返信する場合はコメントの返信リンクを押してください。"
           : "コメントするにはログインしてください。",
       );
       setIsLoading(false);
     }
 
     loadThread().catch((error: unknown) => {
-      if (!isMounted) {
+      if (!mounted) {
         return;
       }
 
-      setMessage(`読み込みに失敗しました: ${getMessageFromError(error)}`);
+      setMessage(getMessageFromError(error));
       setIsLoading(false);
     });
 
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setIsLoading(true);
-
       loadThread(nextSession).catch((error: unknown) => {
-        if (!isMounted) {
+        if (!mounted) {
           return;
         }
 
-        setMessage(`読み込みに失敗しました: ${getMessageFromError(error)}`);
+        setMessage(getMessageFromError(error));
         setIsLoading(false);
       });
     });
 
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [postId, supabase]);
@@ -196,15 +197,16 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
       return;
     }
 
+    const client = supabase;
     const [postResult, commentsResult] = await Promise.all([
-      supabase
+      client
         .from("replay_review_posts")
         .select(
           "id, user_id, author_name, title, character_name, current_rank, current_mr, replay_id, body, status, created_at",
         )
         .eq("id", postId)
         .maybeSingle(),
-      supabase
+      client
         .from("replay_review_comments")
         .select("id, post_id, user_id, author_name, body, reply_to_no, created_at")
         .eq("post_id", postId)
@@ -219,8 +221,10 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
       throw commentsResult.error;
     }
 
-    setPost((postResult.data ?? null) as ReplayCoachingPost | null);
+    const nextPost = (postResult.data ?? null) as ReplayCoachingPost | null;
+    setPost(nextPost);
     setComments((commentsResult.data ?? []) as ReplayCoachingComment[]);
+    setContacts(await loadProfileContacts(client, nextPost ? [nextPost.user_id] : []));
   }
 
   function getAuthorName() {
@@ -228,25 +232,25 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
       return "ゲスト";
     }
 
-    const fromMetadata = String(session.user.user_metadata.display_name ?? "").trim();
-    if (fromMetadata) {
-      return fromMetadata;
+    const displayName = String(session.user.user_metadata.display_name ?? "").trim();
+    if (displayName) {
+      return displayName;
     }
 
-    const email = session.user.email ?? "";
-    return email.split("@")[0] || "プレイヤー";
+    return (session.user.email ?? "").split("@")[0] || "プレイヤー";
   }
 
   function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!supabase || !session?.user || !post) {
-      setMessage("コメントするにはログインが必要です。");
+      setMessage("コメントするにはログインしてください。");
       return;
     }
 
+    const client = supabase;
     if (post.status !== "open") {
-      setMessage("終了済みの投稿にはコメントできません。");
+      setMessage("受付中の投稿にのみコメントできます。");
       return;
     }
 
@@ -258,7 +262,7 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
 
     startTransition(async () => {
       try {
-        const { error } = await supabase.from("replay_review_comments").insert({
+        const { error } = await client.from("replay_review_comments").insert({
           post_id: post.id,
           user_id: session.user.id,
           author_name: getAuthorName(),
@@ -287,12 +291,9 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
         <header className="panel rounded-[28px] px-6 py-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Image src="/logo-white.svg" alt="Rush Link" width={148} height={32} />
-          <Link
-            href="/#replay-review"
-            className="secondary-action min-h-0 px-4 py-2 text-sm"
-          >
-            トップへ戻る
-          </Link>
+            <Link href="/#replay-review" className="secondary-action min-h-0 px-4 py-2 text-sm">
+              トップへ戻る
+            </Link>
           </div>
           <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{message}</p>
         </header>
@@ -303,9 +304,7 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
           </section>
         ) : isBlocked ? (
           <section className="panel rounded-[30px] px-6 py-6">
-            <p className="text-sm text-[var(--muted)]">
-              ブロック中のユーザーの投稿は表示していません。
-            </p>
+            <p className="text-sm text-[var(--muted)]">ブロック中のユーザーの投稿は表示されません。</p>
           </section>
         ) : !post ? (
           <section className="panel rounded-[30px] px-6 py-6">
@@ -323,23 +322,15 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
 
               <h1 className="mt-4 text-3xl font-bold text-white">{post.title}</h1>
               <p className="mt-3 text-sm text-[var(--muted)]">
-                <Link
-                  href={`/players/${post.user_id}`}
-                  className="text-[var(--accent-soft)] underline underline-offset-4"
-                >
+                <Link href={`/players/${post.user_id}`} className="text-[var(--accent-soft)] underline underline-offset-4">
                   {post.author_name}
                 </Link>{" "}
                 / {post.current_rank}
-                {post.current_rank === "マスター" && post.current_mr
-                  ? ` / MR ${post.current_mr}`
-                  : ""}
+                {post.current_rank === "マスター" && post.current_mr ? ` / MR ${post.current_mr}` : ""}
               </p>
-              <p className="mt-1 font-mono text-sm text-[var(--accent-soft)]">
-                Replay ID: {post.replay_id}
-              </p>
-              <p className="mt-1 text-xs text-[var(--muted)]/80">
-                投稿日時: {formatPostedAt(post.created_at)}
-              </p>
+              <PostContactChips userId={post.user_id} contacts={contacts} />
+              <p className="mt-2 font-mono text-sm text-[var(--accent-soft)]">Replay ID: {post.replay_id}</p>
+              <p className="mt-1 text-xs text-[var(--muted)]/80">投稿日: {formatPostedAt(post.created_at)}</p>
               <p className="mt-5 text-sm leading-8 text-[var(--muted)]">{post.body}</p>
 
               <ModerationActions
@@ -355,87 +346,71 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
             <section className="panel rounded-[30px] px-6 py-6">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold text-white">コメント {comments.length}件</h2>
-                {post.status !== "open" ? (
-                  <span className="text-xs text-[var(--muted)]">
-                    終了済みのため新規コメントはできません
-                  </span>
+                {replyToNo ? (
+                  <button
+                    type="button"
+                    onClick={() => setReplyToNo(null)}
+                    className="secondary-action min-h-0 px-4 py-2 text-sm"
+                  >
+                    返信先を解除
+                  </button>
                 ) : null}
               </div>
 
-              <div className="mt-5 space-y-3">
+              <div className="mt-5 grid gap-4">
                 {comments.length === 0 ? (
-                  <p className="text-sm text-[var(--muted)]">まだコメントはありません。</p>
+                  <div className="rounded-[24px] border border-white/10 bg-black/20 p-5 text-sm text-[var(--muted)]">
+                    まだコメントはありません。
+                  </div>
                 ) : (
                   comments.map((comment) => (
-                    <div
+                    <article
                       key={comment.id}
-                      className="rounded-[20px] border border-white/10 bg-black/20 p-4"
+                      className="rounded-[24px] border border-white/10 bg-black/20 p-5"
                     >
-                      <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <span className="font-semibold text-white">No.{comment.id}</span>
-                        <span className="text-[var(--muted)]">{comment.author_name}</span>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-lg font-semibold text-white">No.{comment.id}</span>
+                        <span className="text-sm text-[var(--muted)]">{comment.author_name}</span>
                         {comment.reply_to_no ? (
-                          <span className="text-[var(--accent-soft)]">
+                          <span className="text-sm text-[var(--accent-soft)]">
                             No.{comment.reply_to_no} への返信
                           </span>
                         ) : null}
-                        <span className="text-[var(--muted)]/80">
+                        <span className="text-xs text-[var(--muted)]/80">
                           {formatPostedAt(comment.created_at)}
                         </span>
                       </div>
-                      <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                        {comment.body}
-                      </p>
-                      {session?.user && post.status === "open" ? (
-                        <button
-                          type="button"
-                          onClick={() => setReplyToNo(comment.id)}
-                          className="mt-3 text-xs text-[var(--accent-soft)] underline underline-offset-4"
-                        >
-                          No.{comment.id} に返信する
-                        </button>
-                      ) : null}
-                    </div>
+                      <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{comment.body}</p>
+                      <button
+                        type="button"
+                        onClick={() => setReplyToNo(comment.id)}
+                        className="mt-4 text-sm text-[var(--accent-soft)] underline underline-offset-4"
+                      >
+                        No.{comment.id} に返信する
+                      </button>
+                    </article>
                   ))
                 )}
               </div>
 
-              {session?.user ? (
-                post.status === "open" ? (
-                  <form className="mt-5 grid gap-3" onSubmit={handleCommentSubmit}>
-                    {replyToNo ? (
-                      <div className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--muted)]">
-                        No.{replyToNo} への返信として投稿されます。
-                        <button
-                          type="button"
-                          onClick={() => setReplyToNo(null)}
-                          className="ml-2 text-[var(--accent-soft)] underline underline-offset-4"
-                        >
-                          解除
-                        </button>
-                      </div>
-                    ) : null}
-                    <textarea
-                      value={commentBody}
-                      onChange={(event) => setCommentBody(event.target.value)}
-                      className="min-h-28 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-                      placeholder="コメントを入力してください。"
-                      required
-                    />
-                    <button
-                      type="submit"
-                      disabled={isPending}
-                      className="primary-action"
-                    >
-                      {isPending ? "送信中..." : "コメントする"}
-                    </button>
-                  </form>
-                ) : null
-              ) : (
-                <p className="mt-5 text-sm text-[var(--muted)]">
-                  コメントするにはログインしてください。
-                </p>
-              )}
+              <form className="mt-6 grid gap-4" onSubmit={handleCommentSubmit}>
+                {replyToNo ? (
+                  <p className="text-sm text-[var(--muted)]">返信先: No.{replyToNo}</p>
+                ) : null}
+                <label>
+                  <span className="mb-2 block text-sm text-[var(--muted)]">コメント本文</span>
+                  <textarea
+                    value={commentBody}
+                    onChange={(event) => setCommentBody(event.target.value)}
+                    className="min-h-32 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
+                    placeholder="気になった点や改善案を書いてください。"
+                    required
+                  />
+                </label>
+                <button type="submit" disabled={isPending} className="primary-action disabled:opacity-60">
+                  {isPending ? "投稿中..." : "コメントする"}
+                </button>
+              </form>
             </section>
           </>
         )}

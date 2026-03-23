@@ -18,7 +18,7 @@ export default async function ReplayReviewListPage({
           backHref="/#replay-review"
           kicker="Replay Coaching"
           title="リプレイコーチング一覧"
-          description="リプレイID付きの相談を一覧で見られます。ドライブラッシュ、インパクト対策、起き攻め、対空など、見てほしいポイントごとに探せます。"
+          description="リプレイID付きの依頼を一覧で確認できます。投稿を開くと詳細画面でコメントと返信ができます。"
         />
 
         <ReplayReviewBoard
