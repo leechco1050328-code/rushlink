@@ -173,7 +173,7 @@ export function CommunityBoard({
   const [form, setForm] = useState<UnifiedForm>(defaultForm);
   const [purposeFilter, setPurposeFilter] = useState<FilterPurpose>("すべて");
   const [characterFilter, setCharacterFilter] = useState("すべて");
-  const [message, setMessage] = useState("ログインすると投稿できます。");
+  const [, setMessage] = useState("ログインすると投稿できます。");
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
@@ -910,7 +910,6 @@ export function CommunityBoard({
             </form>
           )}
 
-          <p className="mt-5 text-sm leading-7 text-[var(--muted)]">{message}</p>
         </section>
       ) : null}
 

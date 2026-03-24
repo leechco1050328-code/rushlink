@@ -115,13 +115,6 @@ export default function Home() {
                   </Link>
                 </div>
 
-                <div className="mt-8 rounded-[24px] border border-[var(--secondary)]/18 bg-[var(--secondary)]/8 p-5">
-                  <p className="display text-sm text-[var(--secondary)]">Pre Release</p>
-                  <p className="mt-2 text-sm leading-7 text-white/78">
-                    Rush Link は現在ベータ版です。細かい違和感や欲しい機能も含めて、要望フォームから送ってもらえると改善に反映しやすいです。
-                  </p>
-                </div>
-
                 <div className="mt-8 h-px w-full bg-gradient-to-r from-transparent via-white/18 to-transparent" />
 
                 <div className="mt-8 grid gap-4 md:grid-cols-3">

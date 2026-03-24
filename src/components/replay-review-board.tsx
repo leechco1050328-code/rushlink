@@ -111,7 +111,7 @@ export function ReplayReviewBoard({
   const [commentCounts, setCommentCounts] = useState<Record<number, number>>({});
   const [dailyCount, setDailyCount] = useState(0);
   const [form, setForm] = useState<ReplayCoachingForm>(defaultForm);
-  const [message, setMessage] = useState("ログインするとリプレイコーチングを依頼できます。");
+  const [, setMessage] = useState("ログインするとリプレイコーチングを依頼できます。");
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
@@ -572,7 +572,6 @@ export function ReplayReviewBoard({
             </>
           )}
 
-          <p className="mt-5 text-sm leading-7 text-[var(--muted)]">{message}</p>
         </section>
       ) : null}
 

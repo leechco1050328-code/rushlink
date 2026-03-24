@@ -219,9 +219,16 @@ export function ProfileEditor({ onSaved }: ProfileEditorProps) {
           main_character_rank: form.main_character_rank,
           main_character_mr:
             form.main_character_rank === "マスター" ? form.main_character_mr : "",
-          sub_character_rank: form.sub_character_rank,
+          sub_character_rank:
+            form.sub_character && form.sub_character !== "なし"
+              ? form.sub_character_rank
+              : "",
           sub_character_mr:
-            form.sub_character_rank === "マスター" ? form.sub_character_mr : "",
+            form.sub_character &&
+            form.sub_character !== "なし" &&
+            form.sub_character_rank === "マスター"
+              ? form.sub_character_mr
+              : "",
           platform: form.platform.trim(),
           voice_preference: form.voice_preference,
           x_account: form.x_account.trim(),
@@ -365,7 +372,7 @@ export function ProfileEditor({ onSaved }: ProfileEditorProps) {
                     </option>
                   ))}
                 </select>
-                <div className="mt-3">
+                <div className="mt-3 min-h-[2.75rem]">
                   <CharacterChip
                     name={form.main_character}
                     labelPrefix="選択中"
@@ -417,7 +424,9 @@ export function ProfileEditor({ onSaved }: ProfileEditorProps) {
                     className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none"
                   />
                 </label>
-              ) : null}
+              ) : (
+                <div className="min-h-[5.75rem]" aria-hidden="true" />
+              )}
             </div>
 
             <div className="grid gap-4">
@@ -425,68 +434,89 @@ export function ProfileEditor({ onSaved }: ProfileEditorProps) {
                 <span className="mb-2 block text-sm text-[var(--muted)]">サブキャラ</span>
                 <select
                   value={form.sub_character}
-                  onChange={(event) => updateField("sub_character", event.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none"
-                >
-                  <option value="">選択してください</option>
-                  {characterOptions.map((character) => (
-                    <option key={character} value={character}>
-                      {character}
-                    </option>
-                  ))}
-                </select>
-                <div className="mt-3">
-                  <CharacterChip
-                    name={form.sub_character}
-                    labelPrefix="選択中"
-                    size="md"
-                  />
-                </div>
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-sm text-[var(--muted)]">
-                  サブキャラのランク
-                </span>
-                <select
-                  value={form.sub_character_rank}
                   onChange={(event) => {
-                    const nextRank = event.target.value;
-                    updateField("sub_character_rank", nextRank);
-                    if (nextRank !== "マスター") {
+                    const nextCharacter = event.target.value;
+                    updateField("sub_character", nextCharacter);
+                    if (!nextCharacter || nextCharacter === "なし") {
+                      updateField("sub_character_rank", "");
                       updateField("sub_character_mr", "1500");
                     }
                   }}
                   className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none"
                 >
                   <option value="">選択してください</option>
-                  {rankOptions.map((rank) => (
-                    <option key={rank} value={rank}>
-                      {rank}
+                  <option value="なし">なし</option>
+                  {characterOptions.map((character) => (
+                    <option key={character} value={character}>
+                      {character}
                     </option>
                   ))}
                 </select>
+                <div className="mt-3 min-h-[2.75rem]">
+                  {form.sub_character && form.sub_character !== "なし" ? (
+                    <CharacterChip
+                      name={form.sub_character}
+                      labelPrefix="選択中"
+                      size="md"
+                    />
+                  ) : null}
+                </div>
               </label>
 
-              {form.sub_character_rank === "マスター" ? (
-                <label className="block">
-                  <span className="mb-2 block text-sm text-[var(--muted)]">
-                    サブキャラのMR
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min="800"
-                    max="2600"
-                    step="50"
-                    value={form.sub_character_mr}
-                    onChange={(event) =>
-                      updateField("sub_character_mr", event.target.value)
-                    }
-                    className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none"
-                  />
-                </label>
-              ) : null}
+              {form.sub_character && form.sub_character !== "なし" ? (
+                <>
+                  <label className="block">
+                    <span className="mb-2 block text-sm text-[var(--muted)]">
+                      サブキャラのランク
+                    </span>
+                    <select
+                      value={form.sub_character_rank}
+                      onChange={(event) => {
+                        const nextRank = event.target.value;
+                        updateField("sub_character_rank", nextRank);
+                        if (nextRank !== "マスター") {
+                          updateField("sub_character_mr", "1500");
+                        }
+                      }}
+                      className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none"
+                    >
+                      <option value="">選択してください</option>
+                      {rankOptions.map((rank) => (
+                        <option key={rank} value={rank}>
+                          {rank}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {form.sub_character_rank === "マスター" ? (
+                    <label className="block">
+                      <span className="mb-2 block text-sm text-[var(--muted)]">
+                        サブキャラのMR
+                      </span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="800"
+                        max="2600"
+                        step="50"
+                        value={form.sub_character_mr}
+                        onChange={(event) =>
+                          updateField("sub_character_mr", event.target.value)
+                        }
+                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none"
+                      />
+                    </label>
+                  ) : (
+                    <div className="min-h-[5.75rem]" aria-hidden="true" />
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="min-h-[5.75rem]" aria-hidden="true" />
+                  <div className="min-h-[5.75rem]" aria-hidden="true" />
+                </>
+              )}
             </div>
           </div>
 
