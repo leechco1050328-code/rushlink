@@ -8,14 +8,12 @@ type FeedbackFormState = {
   category: string;
   title: string;
   detail: string;
-  contact: string;
 };
 
 const defaultForm: FeedbackFormState = {
   category: "feature",
   title: "",
   detail: "",
-  contact: "",
 };
 
 const categoryOptions = [
@@ -56,12 +54,6 @@ export function FeedbackForm() {
       }
 
       setSession(data.session);
-      if (data.session?.user?.email) {
-        setForm((current) => ({
-          ...current,
-          contact: current.contact || data.session?.user.email || "",
-        }));
-      }
     });
 
     const {
@@ -72,12 +64,6 @@ export function FeedbackForm() {
       }
 
       setSession(nextSession);
-      if (nextSession?.user?.email) {
-        setForm((current) => ({
-          ...current,
-          contact: current.contact || nextSession.user.email || "",
-        }));
-      }
     });
 
     return () => {
@@ -112,17 +98,14 @@ export function FeedbackForm() {
           category: form.category,
           title: form.title.trim(),
           detail: form.detail.trim(),
-          contact: form.contact.trim(),
+          contact: "",
         });
 
         if (error) {
           throw error;
         }
 
-        setForm((current) => ({
-          ...defaultForm,
-          contact: current.contact,
-        }));
+        setForm(defaultForm);
         setMessage("要望を送信しました。ありがとうございます。");
       } catch (error: unknown) {
         setMessage(`送信に失敗しました: ${getMessageFromError(error)}`);
@@ -150,7 +133,9 @@ export function FeedbackForm() {
 
       <div className="mt-5 rounded-[24px] border border-white/10 bg-black/20 p-5 text-sm leading-7 text-[var(--muted)]">
         <p>細かい違和感でも大丈夫です。</p>
-        <p>「どのページで」「何をしていた時に」「どうなってほしいか」を書いてもらえると対応しやすいです。</p>
+        <p>
+          「どのページで」「何をしていた時に」「どうなってほしいか」を書いてもらえると対応しやすいです。
+        </p>
       </div>
 
       <form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
@@ -169,15 +154,7 @@ export function FeedbackForm() {
           </select>
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-sm text-[var(--muted)]">連絡先</span>
-          <input
-            value={form.contact}
-            onChange={(event) => updateField("contact", event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-            placeholder="メール / X / Discord など"
-          />
-        </label>
+        <div className="hidden md:block" aria-hidden="true" />
 
         <label className="block md:col-span-2">
           <span className="mb-2 block text-sm text-[var(--muted)]">件名</span>
@@ -202,7 +179,11 @@ export function FeedbackForm() {
         </label>
 
         <div className="md:col-span-2">
-          <button type="submit" disabled={isPending} className="primary-action disabled:opacity-60">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="primary-action disabled:opacity-60"
+          >
             {isPending ? "送信中..." : "要望を送信する"}
           </button>
         </div>
