@@ -9,8 +9,8 @@ export default function MyPostsPage() {
         <BrandPageHeader
           backHref="/"
           kicker="My Posts"
-          title="自分の投稿管理"
-          description="自分が出した対戦募集、教えたい / 教わりたい募集、リプレイコーチング依頼をまとめて確認できます。"
+          title="自分の投稿一覧"
+          description="自分が出した対戦募集、教えたい / 教わりたい募集、リプレイコーチング投稿をまとめて確認できます。"
         />
 
         <MyPostsPanel />

@@ -11,7 +11,7 @@ export default function ProfilePage() {
           backHref="/"
           kicker="Profile Edit"
           title="プロフィール編集"
-          description="表示名、メイン/サブキャラ、MR、SNSを更新できます。Street Fighter 6 のメインキャラやサブキャラを見せて、募集相手に伝わるプロフィールに整えます。"
+          description="表示名、メイン / サブキャラ、MR、SNS を更新できます。Street Fighter 6 の募集や相談に使う情報をここで整えてください。"
         />
 
         <section className="space-y-6">

@@ -29,13 +29,18 @@ export function BrandPageHeader({
           >
             {backLabel}
           </Link>
-          <Image
-            src="/logo-white.svg"
-            alt="Rush Link"
-            width={400}
-            height={120}
-            className="h-9 w-auto md:h-10"
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <Image
+              src="/logo-white.svg"
+              alt="Rush Link"
+              width={400}
+              height={120}
+              className="h-9 w-auto md:h-10"
+            />
+            <span className="pill-button rounded-full border border-[var(--secondary)]/35 bg-[var(--secondary)]/12 px-3 py-1 text-xs text-[var(--secondary)]">
+              Beta
+            </span>
+          </div>
           {kicker ? (
             <p className="display text-sm text-[var(--accent-soft)]">{kicker}</p>
           ) : null}

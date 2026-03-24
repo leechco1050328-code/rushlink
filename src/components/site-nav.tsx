@@ -63,7 +63,7 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
     >
       {session?.user ? (
         <>
-          <Link href="/my-posts" className={pillClass}>
+          <Link href="/myposts" className={pillClass}>
             自分の投稿
           </Link>
           <button
@@ -89,12 +89,15 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
       <Link href="/profile" className={pillClass}>
         プロフィール編集
       </Link>
-      <a href="#board" className={pillClass}>
+      <Link href="/#board" className={pillClass}>
         募集ボード
-      </a>
-      <a href="#replay-review" className={pillClass}>
+      </Link>
+      <Link href="/#replay-review" className={pillClass}>
         リプレイコーチング
-      </a>
+      </Link>
+      <Link href="/feedback" className={pillClass}>
+        要望フォーム
+      </Link>
     </nav>
   );
 }

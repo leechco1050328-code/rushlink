@@ -12,26 +12,26 @@ const siteDescription =
 
 const quickFlow = [
   "プロフィールを保存する",
-  "MR帯や使いキャラを見て募集を出すか一覧から相手を探す",
+  "MR帯や使いキャラで募集を出すか一覧から相手を探す",
   "詳細ページで条件とキャラを確認する",
   "SNSから連絡を取り、セットを始める",
 ];
 
 const featureCards = [
   {
-    title: "誰向けか",
+    title: "対戦相手を探す",
     description:
-      "スト6を中心に、対戦相手を探したい人、教えたい人、教わりたい人向けのコミュニティーです。",
+      "MR帯や使用キャラを合わせて、今やりたい相手を見つけやすくしています。",
   },
   {
-    title: "何ができるか",
+    title: "教えたい / 教わりたい",
     description:
-      "キャラ別募集、通話ありなしの指定、ランクやMRの条件指定、ドライブラッシュや対空の相談、リプレイコーチング依頼ができます。",
+      "対戦募集だけでなく、学びたい内容や教えられる内容も同じ場所で扱えます。",
   },
   {
-    title: "どう使うか",
+    title: "リプレイ相談",
     description:
-      "登録してプロフィールを保存したら、MR帯やキャラ条件を添えて募集を出すか、一覧から相手を探すだけで使い始められます。",
+      "ゲーム内のリプレイIDを使って、立ち回りやセットプレイの相談ができます。",
   },
 ];
 
@@ -68,14 +68,19 @@ export default function Home() {
           <div className="relative z-10">
             <header className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
               <div className="space-y-4">
-                <Image
-                  src="/logo-white.svg"
-                  alt="Rush Link"
-                  width={400}
-                  height={120}
-                  priority
-                  className="h-10 w-auto md:h-12"
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Image
+                    src="/logo-white.svg"
+                    alt="Rush Link"
+                    width={400}
+                    height={120}
+                    priority
+                    className="h-10 w-auto md:h-12"
+                  />
+                  <span className="pill-button rounded-full border border-[var(--secondary)]/35 bg-[var(--secondary)]/12 px-3 py-1 text-xs text-[var(--secondary)]">
+                    Beta
+                  </span>
+                </div>
                 <p className="max-w-xl text-sm leading-7 text-white/72">
                   {siteDescription}
                 </p>
@@ -102,12 +107,19 @@ export default function Home() {
                   <Link href="/auth" className="primary-action w-auto min-w-[13rem]">
                     登録フォームを見る
                   </Link>
-                  <a
-                    href="#board"
+                  <Link
+                    href="/feedback"
                     className="pill-button min-h-[3.2rem] min-w-[11rem] rounded-full border border-white/18 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] transition-colors hover:bg-white/14"
                   >
-                    募集ボードへ
-                  </a>
+                    要望フォームへ
+                  </Link>
+                </div>
+
+                <div className="mt-8 rounded-[24px] border border-[var(--secondary)]/18 bg-[var(--secondary)]/8 p-5">
+                  <p className="display text-sm text-[var(--secondary)]">Pre Release</p>
+                  <p className="mt-2 text-sm leading-7 text-white/78">
+                    Rush Link は現在ベータ版です。細かい違和感や欲しい機能も含めて、要望フォームから送ってもらえると改善に反映しやすいです。
+                  </p>
                 </div>
 
                 <div className="mt-8 h-px w-full bg-gradient-to-r from-transparent via-white/18 to-transparent" />
@@ -160,15 +172,15 @@ export default function Home() {
           <section id="profiles" className="space-y-8 pt-10">
             <SectionTitle
               kicker="Profiles"
-              title="プロフィール未設定のときだけ表示"
-              description="先にプロフィールを保存しておくと、対戦募集とリプレイコーチング投稿が使えるようになります。"
+              title="プロフィール未設定だと始まらない"
+              description="先にプロフィールを保存しておくと、対戦募集とリプレイコーチング相談が使えるようになります。"
             />
 
             <div className="panel rounded-[32px] px-6 py-6">
               <p className="display text-2xl text-white">最初の設定手順</p>
               <div className="mt-5 space-y-3 text-sm leading-7 text-[var(--muted)]">
                 <p>1. ログイン後にプロフィールを保存します。</p>
-                <p>2. 使いキャラ、ランク、MR、SNSを入れておくと相手に伝わりやすくなります。</p>
+                <p>2. 使いキャラ、ランク、MR、SNS を入れると募集相手に伝わりやすくなります。</p>
                 <p>3. 保存後はメニューの「プロフィール編集」からいつでも更新できます。</p>
               </div>
             </div>
@@ -178,7 +190,7 @@ export default function Home() {
         <section id="board" className="space-y-8 pt-10">
           <SectionTitle
             kicker="Community Board"
-            title="対戦募集と教習募集を同じ画面で扱う"
+            title="対戦募集と教えたい / 教わりたいを同じ画面で探す"
             description="募集目的と対象キャラクターで絞り込みできます。ホームでは新着5件だけを表示し、続きは一覧ページで確認できます。"
           />
 
@@ -188,8 +200,8 @@ export default function Home() {
         <section id="replay-review" className="space-y-8 pt-10">
           <SectionTitle
             kicker="Replay Coaching"
-            title="リプレイIDから相談できる別ボード"
-            description="募集一覧とは別に、リプレイコーチング依頼を独立して管理できます。投稿を開くと詳細画面でコメントできます。"
+            title="リプレイIDから相談できる添削ボード"
+            description="募集一覧とは別に、リプレイコーチング専用の投稿画面を用意しています。気になる投稿は詳細画面でコメントできます。"
           />
 
           <ReplayReviewBoard listLimit={5} listPageHref="/replay-review" />
