@@ -7,6 +7,7 @@ import type { Session } from "@supabase/supabase-js";
 import { CharacterChip } from "@/components/character-chip";
 import { ModerationActions } from "@/components/moderation-actions";
 import { PostContactChips } from "@/components/post-contact-chips";
+import { SharePostActions } from "@/components/share-post-actions";
 import { getBlockedUserIds } from "@/lib/moderation";
 import { loadProfileContacts, type ProfileContactMap } from "@/lib/profile-contacts";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -284,6 +285,8 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
     });
   }
 
+  const isOwner = session?.user?.id === post?.user_id;
+
   return (
     <main className="relative overflow-hidden">
       <div className="grid-noise absolute inset-0 opacity-40" />
@@ -333,14 +336,18 @@ export function ReplayReviewDetail({ postId }: { postId: number | null }) {
               <p className="mt-1 text-xs text-[var(--muted)]/80">投稿日: {formatPostedAt(post.created_at)}</p>
               <p className="mt-5 text-sm leading-8 text-[var(--muted)]">{post.body}</p>
 
-              <ModerationActions
-                targetUserId={post.user_id}
-                targetName={post.author_name}
-                targetKind="replay_review"
-                targetSource="replay_review_posts"
-                targetId={post.id}
-                targetTitle={post.title}
-              />
+              {isOwner ? (
+                <SharePostActions title={post.title} path={`/replay-review/${post.id}`} />
+              ) : (
+                <ModerationActions
+                  targetUserId={post.user_id}
+                  targetName={post.author_name}
+                  targetKind="replay_review"
+                  targetSource="replay_review_posts"
+                  targetId={post.id}
+                  targetTitle={post.title}
+                />
+              )}
             </section>
 
             <section className="panel rounded-[30px] px-6 py-6">

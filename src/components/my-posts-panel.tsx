@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { SharePostActions } from "@/components/share-post-actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type MyPost = {
@@ -27,7 +28,7 @@ function getMessageFromError(error: unknown) {
     return error.message;
   }
 
-  return "予期しないエラーが発生しました。";
+  return "エラーが発生しました。";
 }
 
 export function MyPostsPanel() {
@@ -100,13 +101,15 @@ export function MyPostsPanel() {
       }
 
       const merged: MyPost[] = [
-        ...((recruitmentResult.data ?? []) as Array<{ id: number; title: string; created_at: string }>).map((row) => ({
-          id: row.id,
-          kind: "対戦募集" as const,
-          title: row.title,
-          created_at: row.created_at,
-          href: `/board/recruitment/${row.id}`,
-        })),
+        ...((recruitmentResult.data ?? []) as Array<{ id: number; title: string; created_at: string }>).map(
+          (row) => ({
+            id: row.id,
+            kind: "対戦募集" as const,
+            title: row.title,
+            created_at: row.created_at,
+            href: `/board/recruitment/${row.id}`,
+          }),
+        ),
         ...((coachingResult.data ?? []) as Array<{ id: number; title: string; created_at: string }>).map((row) => ({
           id: row.id,
           kind: "教えたい / 教わりたい" as const,
@@ -161,21 +164,24 @@ export function MyPostsPanel() {
       ) : (
         <div className="mt-5 grid gap-4">
           {posts.map((post) => (
-            <Link
+            <article
               key={`${post.kind}-${post.id}`}
-              href={post.href}
-              className="rounded-[24px] border border-white/10 bg-black/20 p-5 transition-colors hover:bg-black/30"
+              className="rounded-[24px] border border-white/10 bg-black/20 p-5"
             >
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="pill-button rounded-full bg-white/8 px-3 py-1 text-xs text-[var(--muted)]">
                   {post.kind}
                 </span>
+                <Link href={post.href} className="text-sm text-[var(--accent-soft)] underline underline-offset-4">
+                  詳細を見る
+                </Link>
               </div>
               <h2 className="mt-3 text-xl font-semibold text-white">{post.title}</h2>
               <p className="mt-2 text-sm text-[var(--muted)]">
                 投稿日: {formatPostedAt(post.created_at)}
               </p>
-            </Link>
+              <SharePostActions title={post.title} path={post.href} />
+            </article>
           ))}
         </div>
       )}

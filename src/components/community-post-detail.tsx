@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { CharacterChip } from "@/components/character-chip";
 import { ModerationActions } from "@/components/moderation-actions";
 import { PostContactChips } from "@/components/post-contact-chips";
+import { SharePostActions } from "@/components/share-post-actions";
 import { getBlockedUserIds } from "@/lib/moderation";
 import { loadProfileContacts, type ProfileContactMap } from "@/lib/profile-contacts";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -231,14 +232,17 @@ export function CommunityPostDetail({
               </div>
 
               {isOwner ? (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={isPending}
-                  className="secondary-action min-h-0 px-4 py-2 text-sm disabled:opacity-60"
-                >
-                  {isPending ? "削除中..." : "削除"}
-                </button>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <SharePostActions title={post.title} path={`/board/${kind}/${post.id}`} />
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isPending}
+                    className="secondary-action min-h-0 px-4 py-2 text-sm disabled:opacity-60"
+                  >
+                    {isPending ? "削除中..." : "削除"}
+                  </button>
+                </div>
               ) : null}
             </div>
 
