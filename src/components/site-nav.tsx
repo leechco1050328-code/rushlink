@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { fetchUnreadApplicationCount } from "@/lib/community-applications";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function SiteNav({ invert = false }: { invert?: boolean }) {
   const supabase = getSupabaseBrowserClient();
   const [session, setSession] = useState<Session | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -15,20 +17,44 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
       return;
     }
 
+    const client = supabase;
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
+    async function refresh(nextSession?: Session | null) {
+      const activeSession =
+        nextSession ?? (await client.auth.getSession().then(({ data }) => data.session)) ?? null;
+
       if (!mounted) {
         return;
       }
 
-      setSession(data.session);
-    });
+      setSession(activeSession);
+
+      if (!activeSession?.user) {
+        setUnreadCount(0);
+        return;
+      }
+
+      try {
+        const count = await fetchUnreadApplicationCount(client, activeSession.user.id);
+        if (!mounted) {
+          return;
+        }
+        setUnreadCount(count);
+      } catch {
+        if (!mounted) {
+          return;
+        }
+        setUnreadCount(0);
+      }
+    }
+
+    refresh().catch(() => undefined);
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
+    } = client.auth.onAuthStateChange((_event, nextSession) => {
+      refresh(nextSession).catch(() => undefined);
     });
 
     return () => {
@@ -45,6 +71,7 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
     startTransition(async () => {
       await supabase.auth.signOut();
       setSession(null);
+      setUnreadCount(0);
       window.location.href = "/";
     });
   }
@@ -63,6 +90,14 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
     >
       {session?.user ? (
         <>
+          <Link href="/notifications" className={`${pillClass} relative`}>
+            通知
+            {unreadCount > 0 ? (
+              <span className="ml-2 rounded-full bg-[var(--secondary)] px-2 py-0.5 text-[10px] font-semibold text-[#09111f]">
+                {unreadCount}
+              </span>
+            ) : null}
+          </Link>
           <Link href="/myposts" className={pillClass}>
             自分の投稿
           </Link>

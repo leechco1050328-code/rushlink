@@ -1,7 +1,7 @@
 import { BrandPageHeader } from "@/components/brand-page-header";
-import { MyPostsPanel } from "@/components/my-posts-panel";
+import { NotificationsPanel } from "@/components/notifications-panel";
 
-export default function MyPostsPage() {
+export default function NotificationsPage() {
   return (
     <main className="relative overflow-hidden">
       <div className="grid-noise absolute inset-0 opacity-40" />
@@ -9,12 +9,12 @@ export default function MyPostsPage() {
         <BrandPageHeader
           backHref="/"
           backLabel="トップへ戻る"
-          kicker="My Posts"
-          title="自分の投稿一覧"
-          description="自分が出した募集とリプレイコーチング投稿、届いた応募をまとめて確認できます。"
+          kicker="Notifications"
+          title="応募通知"
+          description="あなたの募集に対して届いた応募を確認できます。未読通知はここでまとめて既読にできます。"
         />
 
-        <MyPostsPanel />
+        <NotificationsPanel />
       </section>
     </main>
   );
