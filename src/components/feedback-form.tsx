@@ -10,6 +10,11 @@ type FeedbackFormState = {
   detail: string;
 };
 
+type NoticeState = {
+  kind: "info" | "success" | "error";
+  text: string;
+};
+
 const defaultForm: FeedbackFormState = {
   category: "feature",
   title: "",
@@ -35,14 +40,18 @@ export function FeedbackForm() {
   const supabase = getSupabaseBrowserClient();
   const [session, setSession] = useState<Session | null>(null);
   const [form, setForm] = useState<FeedbackFormState>(defaultForm);
-  const [message, setMessage] = useState(
-    "ベータ版のため、気になった点や欲しい機能を気軽に送ってください。",
-  );
+  const [notice, setNotice] = useState<NoticeState>({
+    kind: "info",
+    text: "ベータ版のため、気になった点や欲しい機能を気軽に送ってください。",
+  });
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (!supabase) {
-      setMessage("Supabase の接続情報が見つからないため、フォームを送信できません。");
+      setNotice({
+        kind: "error",
+        text: "Supabase の接続情報が見つからないため、フォームを送信できません。",
+      });
       return;
     }
 
@@ -86,7 +95,10 @@ export function FeedbackForm() {
     event.preventDefault();
 
     if (!supabase) {
-      setMessage("Supabase の接続情報が見つからないため、フォームを送信できません。");
+      setNotice({
+        kind: "error",
+        text: "Supabase の接続情報が見つからないため、フォームを送信できません。",
+      });
       return;
     }
 
@@ -106,12 +118,25 @@ export function FeedbackForm() {
         }
 
         setForm(defaultForm);
-        setMessage("要望を送信しました。ありがとうございます。");
+        setNotice({
+          kind: "success",
+          text: "要望を送信しました。ご協力ありがとうございます。",
+        });
       } catch (error: unknown) {
-        setMessage(`送信に失敗しました: ${getMessageFromError(error)}`);
+        setNotice({
+          kind: "error",
+          text: `送信に失敗しました: ${getMessageFromError(error)}`,
+        });
       }
     });
   }
+
+  const noticeClass =
+    notice.kind === "success"
+      ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+      : notice.kind === "error"
+        ? "border-rose-400/30 bg-rose-400/10 text-rose-200"
+        : "border-white/10 bg-white/5 text-[var(--muted)]";
 
   return (
     <section className="panel rounded-[30px] px-6 py-6">
@@ -127,8 +152,8 @@ export function FeedbackForm() {
         </span>
       </div>
 
-      <div className="mt-5 rounded-[20px] border border-white/10 bg-white/5 p-4 text-sm leading-7 text-[var(--muted)]">
-        <p>{message}</p>
+      <div className={`mt-5 rounded-[20px] border p-4 text-sm leading-7 ${noticeClass}`}>
+        <p>{notice.text}</p>
       </div>
 
       <div className="mt-5 rounded-[24px] border border-white/10 bg-black/20 p-5 text-sm leading-7 text-[var(--muted)]">
@@ -178,7 +203,7 @@ export function FeedbackForm() {
           />
         </label>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-3">
           <button
             type="submit"
             disabled={isPending}
@@ -186,6 +211,12 @@ export function FeedbackForm() {
           >
             {isPending ? "送信中..." : "要望を送信する"}
           </button>
+
+          {notice.kind === "success" ? (
+            <p className="text-sm leading-7 text-emerald-200">
+              送信が完了しました。内容は運営側で確認します。
+            </p>
+          ) : null}
         </div>
       </form>
     </section>
