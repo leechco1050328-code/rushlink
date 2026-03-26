@@ -72,6 +72,10 @@ function buildPageHref(baseHref: string, page: number) {
   return `${baseHref}?page=${page}`;
 }
 
+function buildGeneratedReplayTitle(form: ReplayCoachingForm) {
+  return `${form.character_name || "キャラ未設定"} / ${form.current_rank || "ランク未設定"}`;
+}
+
 function getTodayRange() {
   const now = new Date();
   const start = new Date(now);
@@ -389,7 +393,7 @@ export function ReplayReviewBoard({
         const { error } = await supabase.from("replay_review_posts").insert({
           user_id: session.user.id,
           author_name: getAuthorName(),
-          title: form.title.trim(),
+          title: buildGeneratedReplayTitle(form),
           character_name: form.character_name,
           current_rank: form.current_rank,
           current_mr: form.current_rank === "マスター" ? form.current_mr : "",
@@ -474,17 +478,6 @@ export function ReplayReviewBoard({
               </div>
 
               <form className="mt-5 grid gap-4" onSubmit={handleSubmit}>
-                <label>
-                  <span className="mb-2 block text-sm text-[var(--muted)]">投稿タイトル</span>
-                  <input
-                    value={form.title}
-                    onChange={(event) => updateField("title", event.target.value)}
-                    className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-                    placeholder="例: 豪鬼戦の立ち回りを見てほしい"
-                    required
-                  />
-                </label>
-
                 <div className="grid gap-4 md:grid-cols-2">
                   <label>
                     <span className="mb-2 block text-sm text-[var(--muted)]">使用キャラクター</span>

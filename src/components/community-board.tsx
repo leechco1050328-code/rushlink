@@ -533,7 +533,7 @@ export function CommunityBoard({
           const { error } = await supabase.from("recruitment_posts").insert({
             user_id: session.user.id,
             author_name: getAuthorName(),
-            title: form.title.trim(),
+            title: `${form.character_name || "キャラ未設定"} / ${form.self_rank || "ランク未設定"}`,
             character_name: form.character_name,
             self_rank: form.self_rank,
             self_mr: form.self_rank === "マスター" ? form.self_mr : "",
@@ -557,7 +557,7 @@ export function CommunityBoard({
             user_id: session.user.id,
             author_name: getAuthorName(),
             post_type: form.purpose,
-            title: form.title.trim(),
+            title: `${String(form.purpose) || "募集"} / ${form.character_name || "キャラ未設定"}`,
             character_name: form.character_name,
             current_rank: form.self_rank,
             current_mr: form.self_rank === "マスター" ? form.self_mr : "",
@@ -676,17 +676,6 @@ export function CommunityBoard({
                   </select>
                 </label>
               </div>
-
-              <label>
-                <span className="mb-2 block text-sm text-[var(--muted)]">募集タイトル</span>
-                <input
-                  value={form.title}
-                  onChange={(event) => updateField("title", event.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35"
-                  placeholder="例: ダイヤ帯で対戦相手募集"
-                  required
-                />
-              </label>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label>

@@ -4,21 +4,39 @@ import { AdSenseScript } from "@/components/adsense-script";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const siteDescription =
   "Street Fighter 6 でMR帯別の対戦募集、教えたい / 教わりたい募集、リプレイIDを使ったコーチング相談まで扱うコミュニティーです。";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "Rush Link | 格闘ゲーマー向けコミュニティー",
+  metadataBase: new URL(siteUrl),
+  title: "Rush Link | Street Fighter 6 コミュニティー",
   description: siteDescription,
+  keywords: [
+    "Street Fighter 6",
+    "スト6",
+    "対戦募集",
+    "教えたい",
+    "教わりたい",
+    "リプレイコーチング",
+    "MR",
+    "格ゲーコミュニティー",
+  ],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Rush Link | 格闘ゲーマー向けコミュニティー",
+    type: "website",
+    url: siteUrl,
+    siteName: "Rush Link",
+    title: "Rush Link | Street Fighter 6 コミュニティー",
     description: siteDescription,
+    locale: "ja_JP",
     images: ["/opengraph-image"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rush Link | 格闘ゲーマー向けコミュニティー",
+    title: "Rush Link | Street Fighter 6 コミュニティー",
     description: siteDescription,
     images: ["/twitter-image"],
   },

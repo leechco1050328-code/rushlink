@@ -16,9 +16,10 @@ export default async function AuthPage({
       <section className="relative mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-8 md:px-10 md:py-10">
         <BrandPageHeader
           backHref="/"
+          backLabel="トップへ戻る"
           kicker="Entry"
           title="ユーザー登録とログイン"
-          description="Street Fighter 6 の対戦募集、教えたい / 教わりたい募集、リプレイコーチングに参加するための認証ページです。"
+          description="メールアドレスのほか、Google と Discord のアカウントでもログインできるようにした認証ページです。"
         />
 
         <AuthPanel initialMode={initialMode} />

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import type { Session } from "@supabase/supabase-js";
+import type { Provider, Session } from "@supabase/supabase-js";
 import {
   getMissingSupabaseEnv,
   getSupabaseBrowserClient,
@@ -16,7 +16,7 @@ function getMessageFromError(error: unknown) {
     return error.message;
   }
 
-  return "予期しないエラーが発生しました。";
+  return "エラーが発生しました。";
 }
 
 export function AuthPanel({
@@ -39,7 +39,7 @@ export function AuthPanel({
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(isConfigured);
   const [message, setMessage] = useState(
-    "メールアドレスとパスワードで登録できます。ログインするとトップページへ戻ります。",
+    "メールアドレスとパスワード、または Google / Discord でログインできます。",
   );
   const [isPending, startTransition] = useTransition();
 
@@ -98,7 +98,7 @@ export function AuthPanel({
     }
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!supabase) {
@@ -126,9 +126,13 @@ export function AuthPanel({
           setSession(data.session);
           setMessage(
             data.session
-              ? "登録が完了しました。プロフィールを設定して使い始められます。"
-              : "確認メールを送信しました。メール内リンクを開いて登録を完了してください。",
+              ? "登録が完了しました。トップページへ移動します。"
+              : "確認メールを送信しました。メール内のリンクから登録を完了してください。",
           );
+
+          if (data.session) {
+            goTop();
+          }
           return;
         }
 
@@ -146,6 +150,36 @@ export function AuthPanel({
         goTop();
       } catch (error: unknown) {
         setMessage(`認証に失敗しました: ${getMessageFromError(error)}`);
+      }
+    });
+  }
+
+  function handleOAuthLogin(provider: Provider) {
+    if (!supabase) {
+      setMessage("`.env.local` に Supabase の設定を入れると利用できます。");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: `${origin}/auth`,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        setMessage(
+          provider === "google"
+            ? "Google ログインへ移動します。"
+            : "Discord ログインへ移動します。",
+        );
+      } catch (error: unknown) {
+        setMessage(`OAuth ログインに失敗しました: ${getMessageFromError(error)}`);
       }
     });
   }
@@ -202,7 +236,7 @@ export function AuthPanel({
         <div>
           <p className="display text-2xl text-white">ユーザー登録 / ログイン</p>
           <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            Street Fighter 6 の対戦募集とリプレイコーチングに参加するための認証ページです。
+            Street Fighter 6 の募集投稿とリプレイコーチングを使うための認証ページです。
           </p>
         </div>
         <span
@@ -219,7 +253,7 @@ export function AuthPanel({
       {!isConfigured ? (
         <div className="mt-6 space-y-4 rounded-[24px] border border-white/10 bg-black/20 p-5">
           <p className="text-sm leading-7 text-[var(--muted)]">
-            Supabase と接続すると本物の会員登録が使えます。
+            Supabase をつなぐと、ここで本物のユーザー登録ができます。
           </p>
           <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 text-sm text-[var(--muted)]">
             未設定の環境変数: {missingEnv.join(", ")}
@@ -227,7 +261,7 @@ export function AuthPanel({
         </div>
       ) : session?.user ? (
         <div className="mt-6 rounded-[24px] border border-white/10 bg-black/20 p-5">
-          <p className="text-sm text-[var(--muted)]">現在ログイン中です。</p>
+          <p className="text-sm text-[var(--muted)]">現在のログイン状態</p>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             メール: {session.user.email}
             <br />
@@ -244,6 +278,25 @@ export function AuthPanel({
         </div>
       ) : (
         <div className="mt-6 space-y-5">
+          <div className="grid gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => handleOAuthLogin("google")}
+              disabled={isPending}
+              className="secondary-action text-sm disabled:opacity-60"
+            >
+              Google でログイン
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOAuthLogin("discord")}
+              disabled={isPending}
+              className="secondary-action text-sm disabled:opacity-60"
+            >
+              Discord でログイン
+            </button>
+          </div>
+
           <div className="flex gap-3 text-sm">
             <button
               type="button"
@@ -308,7 +361,11 @@ export function AuthPanel({
             </label>
 
             <div className="flex flex-wrap gap-3">
-              <button type="submit" disabled={isPending} className="primary-action disabled:opacity-60">
+              <button
+                type="submit"
+                disabled={isPending}
+                className="primary-action disabled:opacity-60"
+              >
                 {isPending
                   ? "送信中..."
                   : mode === "sign-up"
@@ -325,6 +382,10 @@ export function AuthPanel({
               </button>
             </div>
           </form>
+
+          <p className="text-xs leading-6 text-[var(--muted)]">
+            Google / Discord ログインを使うには、Supabase 側で該当プロバイダを有効化してください。
+          </p>
         </div>
       )}
 
