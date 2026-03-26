@@ -19,7 +19,7 @@ export default async function AuthPage({
           backLabel="トップへ戻る"
           kicker="Entry"
           title="ユーザー登録とログイン"
-          description="メールアドレスのほか、Google と Discord のアカウントでもログインできるようにした認証ページです。"
+          description="メールアドレスとパスワードでアカウントを作成し、募集投稿やリプレイコーチングを使えるようにします。"
         />
 
         <AuthPanel initialMode={initialMode} />

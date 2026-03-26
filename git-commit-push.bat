@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set "REPO_DIR=C:\Users\leech\OneDrive\ドキュメント\New project\fgc-community"
+set "REPO_DIR=%~dp0"
 
 if "%~1"=="" (
     set /p "COMMIT_MESSAGE=Commit message: "

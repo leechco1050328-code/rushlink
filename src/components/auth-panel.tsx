@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import type { Provider, Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 import {
   getMissingSupabaseEnv,
   getSupabaseBrowserClient,
@@ -16,7 +16,7 @@ function getMessageFromError(error: unknown) {
     return error.message;
   }
 
-  return "エラーが発生しました。";
+  return "認証に失敗しました。";
 }
 
 export function AuthPanel({
@@ -39,7 +39,7 @@ export function AuthPanel({
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(isConfigured);
   const [message, setMessage] = useState(
-    "メールアドレスとパスワード、または Google / Discord でログインできます。",
+    "メールアドレスとパスワードで登録・ログインできます。",
   );
   const [isPending, startTransition] = useTransition();
 
@@ -154,36 +154,6 @@ export function AuthPanel({
     });
   }
 
-  function handleOAuthLogin(provider: Provider) {
-    if (!supabase) {
-      setMessage("`.env.local` に Supabase の設定を入れると利用できます。");
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: `${origin}/auth`,
-          },
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        setMessage(
-          provider === "google"
-            ? "Google ログインへ移動します。"
-            : "Discord ログインへ移動します。",
-        );
-      } catch (error: unknown) {
-        setMessage(`OAuth ログインに失敗しました: ${getMessageFromError(error)}`);
-      }
-    });
-  }
-
   function handleLogout() {
     if (!supabase) {
       return;
@@ -236,7 +206,7 @@ export function AuthPanel({
         <div>
           <p className="display text-2xl text-white">ユーザー登録 / ログイン</p>
           <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            Street Fighter 6 の募集投稿とリプレイコーチングを使うための認証ページです。
+            Street Fighter 6 の対戦募集やリプレイ相談に使うアカウントを作成できます。
           </p>
         </div>
         <span
@@ -278,25 +248,6 @@ export function AuthPanel({
         </div>
       ) : (
         <div className="mt-6 space-y-5">
-          <div className="grid gap-3 md:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => handleOAuthLogin("google")}
-              disabled={isPending}
-              className="secondary-action text-sm disabled:opacity-60"
-            >
-              Google でログイン
-            </button>
-            <button
-              type="button"
-              onClick={() => handleOAuthLogin("discord")}
-              disabled={isPending}
-              className="secondary-action text-sm disabled:opacity-60"
-            >
-              Discord でログイン
-            </button>
-          </div>
-
           <div className="flex gap-3 text-sm">
             <button
               type="button"
@@ -382,10 +333,6 @@ export function AuthPanel({
               </button>
             </div>
           </form>
-
-          <p className="text-xs leading-6 text-[var(--muted)]">
-            Google / Discord ログインを使うには、Supabase 側で該当プロバイダを有効化してください。
-          </p>
         </div>
       )}
 
