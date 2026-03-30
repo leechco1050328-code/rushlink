@@ -30,15 +30,6 @@ type ComboFlowEditorProps =
       postId: number;
     };
 
-function formatPostedAt(value: string) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
 function getMessageFromError(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -73,11 +64,12 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const [post, setPost] = useState<ComboFlowPost | null>(null);
   const [isOwner, setIsOwner] = useState(props.mode === "create");
   const [characterName, setCharacterName] = useState<ComboFlowCharacter | "">("");
+  const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [nodes, setNodes] = useState<ComboFlowNode[]>(createInitialNodes());
   const [edges, setEdges] = useState<ComboFlowEdge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [message, setMessage] = useState(
+  const [, setMessage] = useState(
     props.mode === "create"
       ? "新しいコンボフローを作成します。"
       : "コンボフローを読み込んでいます...",
@@ -107,7 +99,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         setIsOwner(Boolean(activeSession?.user));
         setMessage(
           activeSession?.user
-            ? "キャラクターを選んで、ノードをホバーしながらフローを組み立てます。"
+            ? "新しいコンボフローを編集中です。"
             : "コンボフローを作成するにはログインしてください。",
         );
         return;
@@ -137,6 +129,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
       const nextPost = data as ComboFlowPost;
       setPost(nextPost);
+      setTitle(nextPost.title ?? "");
       setCharacterName(
         COMBO_FLOW_CHARACTERS.includes(nextPost.character_name as ComboFlowCharacter)
           ? (nextPost.character_name as ComboFlowCharacter)
@@ -263,7 +256,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       try {
         const displayName = String(session.user.user_metadata.display_name ?? "").trim();
         const authorName = displayName || (session.user.email ?? "").split("@")[0] || "プレイヤー";
-        const title = buildComboFlowTitle(nextNodes);
+        const resolvedTitle = title.trim() || buildComboFlowTitle(nextNodes);
 
         if (props.mode === "create") {
           const { data, error } = await supabase
@@ -272,7 +265,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
               user_id: session.user.id,
               author_name: authorName,
               character_name: characterName,
-              title,
+              title: resolvedTitle,
               summary: summary.trim(),
               flow_nodes: nextNodes,
               flow_edges: nextEdges,
@@ -294,7 +287,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           .from("combo_flow_posts")
           .update({
             character_name: characterName,
-            title,
+            title: resolvedTitle,
             summary: summary.trim(),
             flow_nodes: nextNodes,
             flow_edges: nextEdges,
@@ -325,17 +318,23 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
       <section className="relative flex min-h-screen flex-col gap-4 px-2 py-3 md:px-3 md:py-4">
         <header className="panel flex flex-wrap items-center justify-between gap-4 rounded-[26px] px-5 py-4">
-          <div className="space-y-2">
+          <div className="min-w-[18rem] flex-1 space-y-3">
             <Link
               href="/combo-flow"
               className="text-sm text-[var(--accent-soft)] underline underline-offset-4"
             >
               コンボフロー管理へ戻る
             </Link>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
-              {props.mode === "create" ? "新規コンボフロー作成" : "コンボフロー編集"}
-            </h1>
-            <p className="text-sm leading-7 text-[var(--muted)]">{message}</p>
+            <label className="block">
+              <span className="sr-only">タイトル</span>
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                disabled={!isOwner}
+                className="w-full border-none bg-transparent px-0 py-0 text-3xl font-bold tracking-tight text-white outline-none placeholder:text-white/45 disabled:opacity-70"
+                placeholder={props.mode === "create" ? "タイトルを入力" : "コンボフロータイトル"}
+              />
+            </label>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -386,25 +385,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
               </Link>
             </div>
           </section>
-        ) : (
-          <section className="panel rounded-[26px] px-5 py-4">
-            <label className="block">
-              <span className="mb-2 block text-sm text-[var(--muted)]">補足説明</span>
-              <textarea
-                value={summary}
-                onChange={(event) => setSummary(event.target.value)}
-                disabled={!isOwner}
-                className="min-h-20 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 disabled:opacity-60"
-                placeholder="例: 2MK始動の安定ルート。微歩きが必要な分岐だけ矢印に書きます。"
-              />
-            </label>
-            {post && !isOwner ? (
-              <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                投稿者: {post.author_name} / 投稿日: {formatPostedAt(post.created_at)}
-              </p>
-            ) : null}
-          </section>
-        )}
+        ) : null}
 
         <section className="relative rounded-[26px] border border-white/10 bg-black/15 p-1">
           {session?.user && isOwner ? (
