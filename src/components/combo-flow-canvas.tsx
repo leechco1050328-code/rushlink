@@ -15,7 +15,7 @@ const NODE_WIDTH = 160;
 const NODE_HEIGHT = 88;
 const MIN_CANVAS_WIDTH = 2200;
 const MIN_CANVAS_HEIGHT = 1200;
-const HANDLE_SIZE = 12;
+const HANDLE_SIZE = 16;
 const EDGE_LABEL_WIDTH = 124;
 const EDGE_LABEL_HEIGHT = 28;
 
@@ -40,6 +40,7 @@ type DragNodeState = {
   startClientY: number;
   startNodeX: number;
   startNodeY: number;
+  moved: boolean;
 };
 
 type DragEdgeState = {
@@ -128,9 +129,11 @@ export function ComboFlowCanvas({
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const nodeDragRef = useRef<DragNodeState | null>(null);
   const panCanvasRef = useRef<PanCanvasState | null>(null);
+  const suppressClickNodeIdRef = useRef<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
   const [activeEdgeId, setActiveEdgeId] = useState<string | null>(null);
+  const [activeNodeEditorId, setActiveNodeEditorId] = useState<string | null>(null);
   const [edgeDrag, setEdgeDrag] = useState<DragEdgeState | null>(null);
 
   const canvasSize = useMemo(() => {
@@ -184,6 +187,15 @@ export function ComboFlowCanvas({
       if (nodeDragRef.current && onMoveNode) {
         const deltaX = event.clientX - nodeDragRef.current.startClientX;
         const deltaY = event.clientY - nodeDragRef.current.startClientY;
+
+        if (!nodeDragRef.current.moved) {
+          if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) {
+            return;
+          }
+
+          nodeDragRef.current.moved = true;
+        }
+
         const nextX = clampPosition(
           nodeDragRef.current.startNodeX + deltaX,
           canvasSize.width - NODE_WIDTH,
@@ -221,6 +233,9 @@ export function ComboFlowCanvas({
     }
 
     function handlePointerUp() {
+      if (nodeDragRef.current?.moved) {
+        suppressClickNodeIdRef.current = nodeDragRef.current.id;
+      }
       nodeDragRef.current = null;
       panCanvasRef.current = null;
       setEdgeDrag(null);
@@ -261,9 +276,10 @@ export function ComboFlowCanvas({
             height: `${canvasSize.height}px`,
           }}
           onClick={() => {
-            onSelectNode?.(null);
-            setActiveEdgeId(null);
-          }}
+          onSelectNode?.(null);
+          setActiveEdgeId(null);
+          setActiveNodeEditorId(null);
+        }}
         >
           <div
             className="absolute inset-0 opacity-15"
@@ -427,10 +443,13 @@ export function ComboFlowCanvas({
           {nodes.map((node) => {
             const showHandles =
               interactive && (hoveredNodeId === node.id || selectedNodeId === node.id);
-            const showNodeEditor =
-              interactive && (hoveredNodeId === node.id || selectedNodeId === node.id);
+            const showNodeToolbar =
+              interactive && (hoveredNodeId === node.id || activeNodeEditorId === node.id);
+            const showNodeEditor = interactive && activeNodeEditorId === node.id;
             const moveGroupLabel = getComboFlowMoveGroupLabel(node.move);
             const moveOptions = getMoveOptions(node.move);
+            const isEdgeTarget =
+              interactive && edgeDrag !== null && edgeDrag.sourceId !== node.id;
 
             return (
               <div
@@ -448,6 +467,8 @@ export function ComboFlowCanvas({
                   className={`relative rounded-[20px] border shadow-[0_16px_34px_rgba(0,0,0,0.28)] transition ${
                     selectedNodeId === node.id
                       ? "border-[var(--secondary)] bg-[var(--secondary)]/14"
+                      : isEdgeTarget
+                        ? "border-[var(--accent-soft)] bg-white/5"
                       : "border-white/10 bg-black/70"
                   }`}
                   style={{
@@ -458,6 +479,17 @@ export function ComboFlowCanvas({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
+                      if (suppressClickNodeIdRef.current === node.id) {
+                        suppressClickNodeIdRef.current = null;
+                        return;
+                      }
+
+                      if (edgeDrag && edgeDrag.sourceId !== node.id && onCreateEdge) {
+                        onCreateEdge(edgeDrag.sourceId, node.id);
+                        setEdgeDrag(null);
+                        return;
+                      }
+
                       onSelectNode?.(node.id);
                       setActiveEdgeId(null);
                     }}
@@ -472,6 +504,7 @@ export function ComboFlowCanvas({
                         startClientY: event.clientY,
                         startNodeX: node.x,
                         startNodeY: node.y,
+                        moved: false,
                       };
                     }}
                     className={`flex h-full w-full flex-col items-start rounded-[20px] px-3 py-3 text-left ${
@@ -501,54 +534,63 @@ export function ComboFlowCanvas({
                     ) : null}
                   </button>
 
-                  {showHandles ? (
-                    <>
+                  {showNodeToolbar ? (
+                    <div className="absolute right-2 top-2 z-20 flex items-center gap-1">
                       <button
                         type="button"
-                        aria-label="接続先"
-                        className="absolute rounded-full border border-[var(--secondary)] bg-[#09111f] shadow-[0_0_0_3px_rgba(142,201,255,0.12)]"
-                        style={{
-                          left: `${-HANDLE_SIZE / 2}px`,
-                          top: `${NODE_HEIGHT / 2 - HANDLE_SIZE / 2}px`,
-                          width: `${HANDLE_SIZE}px`,
-                          height: `${HANDLE_SIZE}px`,
-                        }}
-                        onPointerUp={(event) => {
+                        onClick={(event) => {
                           event.stopPropagation();
-                          if (!edgeDrag || !onCreateEdge || edgeDrag.sourceId === node.id) {
-                            return;
-                          }
-                          onCreateEdge(edgeDrag.sourceId, node.id);
-                          setEdgeDrag(null);
+                          setActiveNodeEditorId((current) => (current === node.id ? null : node.id));
+                          onSelectNode?.(node.id);
                         }}
-                      />
-                      <button
-                        type="button"
-                        aria-label="接続開始"
-                        className="absolute rounded-full border border-[var(--secondary)] bg-[#09111f] shadow-[0_0_0_3px_rgba(142,201,255,0.12)]"
-                        style={{
-                          right: `${-HANDLE_SIZE / 2}px`,
-                          top: `${NODE_HEIGHT / 2 - HANDLE_SIZE / 2}px`,
-                          width: `${HANDLE_SIZE}px`,
-                          height: `${HANDLE_SIZE}px`,
-                        }}
-                        onPointerDown={(event) => {
-                          event.stopPropagation();
-                          if (!interactive) {
-                            return;
-                          }
+                        className="rounded-full border border-white/10 bg-[#0a1324]/90 px-2.5 py-1 text-[10px] font-semibold text-[var(--accent-soft)]"
+                      >
+                        編集
+                      </button>
+                      {nodes.length > 2 ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onDeleteNode?.(node.id);
+                            setActiveNodeEditorId((current) => (current === node.id ? null : current));
+                            onSelectNode?.(null);
+                          }}
+                          className="rounded-full border border-white/10 bg-[#0a1324]/90 px-2.5 py-1 text-[10px] font-semibold text-white/80"
+                        >
+                          削除
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
 
-                          const point = getCanvasPoint(canvasRef.current, event.clientX, event.clientY);
-                          setEdgeDrag({
-                            sourceId: node.id,
-                            startX: node.x + NODE_WIDTH,
-                            startY: node.y + NODE_HEIGHT / 2,
-                            currentX: point.x,
-                            currentY: point.y,
-                          });
-                        }}
-                      />
-                    </>
+                  {showHandles ? (
+                    <button
+                      type="button"
+                      aria-label="接続開始"
+                      className="absolute rounded-full border border-[var(--secondary)] bg-[#09111f] shadow-[0_0_0_4px_rgba(142,201,255,0.14)]"
+                      style={{
+                        right: `${-HANDLE_SIZE / 2}px`,
+                        top: `${NODE_HEIGHT / 2 - HANDLE_SIZE / 2}px`,
+                        width: `${HANDLE_SIZE}px`,
+                        height: `${HANDLE_SIZE}px`,
+                      }}
+                      onPointerDown={(event) => {
+                        event.stopPropagation();
+                        if (!interactive) {
+                          return;
+                        }
+
+                        const point = getCanvasPoint(canvasRef.current, event.clientX, event.clientY);
+                        setEdgeDrag({
+                          sourceId: node.id,
+                          startX: node.x + NODE_WIDTH,
+                          startY: node.y + NODE_HEIGHT / 2,
+                          currentX: point.x,
+                          currentY: point.y,
+                        });
+                      }}
+                    />
                   ) : null}
                 </div>
 
