@@ -35,7 +35,8 @@ export const COMBO_FLOW_NODE_TAGS = [
   "端",
   "中央",
   "始動",
-  "締め",
+  "フレーム消費",
+  "気絶やられ",
 ] as const;
 
 export const COMBO_FLOW_EDGE_HINTS = [
