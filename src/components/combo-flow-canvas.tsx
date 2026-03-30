@@ -15,7 +15,7 @@ const NODE_WIDTH = 160;
 const NODE_HEIGHT = 88;
 const MIN_CANVAS_WIDTH = 2200;
 const MIN_CANVAS_HEIGHT = 1200;
-const HANDLE_SIZE = 16;
+const HANDLE_SIZE = 20;
 const EDGE_LABEL_WIDTH = 124;
 const EDGE_LABEL_HEIGHT = 28;
 
@@ -484,14 +484,17 @@ export function ComboFlowCanvas({
                         return;
                       }
 
-                      if (edgeDrag && edgeDrag.sourceId !== node.id && onCreateEdge) {
-                        onCreateEdge(edgeDrag.sourceId, node.id);
-                        setEdgeDrag(null);
+                      onSelectNode?.(node.id);
+                      setActiveEdgeId(null);
+                    }}
+                    onPointerUp={(event) => {
+                      if (!edgeDrag || edgeDrag.sourceId === node.id || !onCreateEdge) {
                         return;
                       }
 
-                      onSelectNode?.(node.id);
-                      setActiveEdgeId(null);
+                      event.stopPropagation();
+                      onCreateEdge(edgeDrag.sourceId, node.id);
+                      setEdgeDrag(null);
                     }}
                     onPointerDown={(event) => {
                       if (!interactive || event.button !== 0) {
