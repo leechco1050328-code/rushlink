@@ -130,9 +130,6 @@ export function SiteNav({ invert = false }: { invert?: boolean }) {
       <Link href="/#replay-review" className={pillClass}>
         リプレイコーチング
       </Link>
-      <Link href="/combo-flow" className={pillClass}>
-        コンボフロー
-      </Link>
       <Link href="/feedback" className={pillClass}>
         要望フォーム
       </Link>

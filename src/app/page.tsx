@@ -79,10 +79,10 @@ export default function Home() {
                   登録フォームを見る
                 </Link>
                 <Link
-                  href="/combo-flow"
+                  href="/feedback"
                   className="pill-button min-h-[3.2rem] min-w-[11rem] rounded-full border border-white/18 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] transition-colors hover:bg-white/14"
                 >
-                  コンボフローへ
+                  要望フォームへ
                 </Link>
               </div>
             </div>
@@ -94,35 +94,6 @@ export default function Home() {
             <AdSenseSlot slot={topAdSlot} label="Advertisement" format="horizontal" />
           </section>
         ) : null}
-
-        <section className="space-y-8 pt-2">
-          <SectionTitle
-            kicker="Combo Flow"
-            title="キャラごとにルートを図で残す"
-            description="技コマンドや技強度をノードで置き、カウンターやパニカン、微歩きやDR付きの分岐を矢印で整理できます。コンボ表よりも、実戦での判断が残る共有方法です。"
-          />
-
-          <div className="grid gap-4 lg:grid-cols-3">
-            <article className="panel rounded-[28px] px-6 py-6">
-              <h3 className="text-2xl font-semibold text-white">ノードで始動を分ける</h3>
-              <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                2MK、弱P、OD波動、SA3 などをそのままノードに置いて、ルートの起点を明確にできます。
-              </p>
-            </article>
-            <article className="panel rounded-[28px] px-6 py-6">
-              <h3 className="text-2xl font-semibold text-white">カウンターやパニカンを付ける</h3>
-              <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                通常ヒット、カウンター、パニカン、端、中央などをラベルで分けて、状況別の伸びを見せられます。
-              </p>
-            </article>
-            <article className="panel rounded-[28px] px-6 py-6">
-              <h3 className="text-2xl font-semibold text-white">矢印に微歩きやDRを書く</h3>
-              <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                コンボに必要な細かい動作を矢印側に残せるので、文字だけのメモより伝わりやすくなります。
-              </p>
-            </article>
-          </div>
-        </section>
 
         <section id="board" className="space-y-8 pt-4">
           <SectionTitle
