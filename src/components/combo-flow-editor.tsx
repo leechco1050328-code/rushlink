@@ -339,6 +339,28 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {session?.user ? (
+              <div className="min-w-[14rem]">
+                <label className="sr-only" htmlFor="combo-flow-character">
+                  キャラクター
+                </label>
+                <select
+                  id="combo-flow-character"
+                  value={characterName}
+                  onChange={(event) => setCharacterName(event.target.value as ComboFlowCharacter)}
+                  disabled={!isOwner}
+                  className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none disabled:opacity-60"
+                >
+                  <option value="">キャラクターを選択</option>
+                  {COMBO_FLOW_CHARACTERS.map((character) => (
+                    <option key={character} value={character}>
+                      {character}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            {characterName ? <CharacterChip name={characterName} size="md" tone="accent" /> : null}
             {isOwner && session?.user ? (
               <button
                 type="button"
@@ -353,79 +375,64 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           </div>
         </header>
 
-        <section className="grid min-h-[calc(100vh-180px)] gap-3 xl:grid-cols-[232px_minmax(0,1fr)]">
-          <aside className="panel self-start rounded-[26px] px-4 py-4 xl:sticky xl:top-3">
-            {!session?.user ? (
-              <div className="space-y-4">
-                <p className="text-sm leading-7 text-[var(--muted)]">
-                  コンボフローを作成・編集するにはログインしてください。
-                </p>
-                <Link href="/auth?mode=sign-in" className="primary-action w-full">
-                  ログインする
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <label className="block">
-                  <span className="mb-2 block text-sm text-[var(--muted)]">キャラクター</span>
-                  <select
-                    value={characterName}
-                    onChange={(event) => setCharacterName(event.target.value as ComboFlowCharacter)}
-                    disabled={!isOwner}
-                    className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none disabled:opacity-60"
-                  >
-                    <option value="">選択してください</option>
-                    {COMBO_FLOW_CHARACTERS.map((character) => (
-                      <option key={character} value={character}>
-                        {character}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                {characterName ? <CharacterChip name={characterName} size="md" tone="accent" /> : null}
-
-                {isOwner ? (
-                  <button
-                    type="button"
-                    onClick={addNode}
-                    className="secondary-action w-full min-h-0 px-4 py-3 text-sm"
-                  >
-                    ノードを追加
-                  </button>
-                ) : null}
-
-                <p className="text-xs leading-6 text-[var(--muted)]">
-                  ノードにマウスオーバーすると、技・ラベル・メモをその場で編集できます。
-                </p>
-
-                {post && !isOwner ? (
-                  <div className="rounded-[22px] border border-white/10 bg-black/20 p-4 text-sm leading-7 text-[var(--muted)]">
-                    投稿者: {post.author_name}
-                    <br />
-                    投稿日: {formatPostedAt(post.created_at)}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </aside>
-
-          <section className="rounded-[26px] border border-white/10 bg-black/15 p-1">
-            <ComboFlowCanvas
-              nodes={nodes}
-              edges={edges}
-              selectedNodeId={selectedNodeId}
-              interactive={Boolean(session?.user && isOwner)}
-              onSelectNode={setSelectedNodeId}
-              onMoveNode={(nodeId, nextX, nextY) => updateNode(nodeId, { x: nextX, y: nextY })}
-              onCreateEdge={addEdge}
-              onUpdateNode={updateNode}
-              onToggleNodeTag={toggleNodeTag}
-              onDeleteNode={removeNode}
-              onUpdateEdge={updateEdge}
-              onDeleteEdge={removeEdge}
-            />
+        {!session?.user ? (
+          <section className="panel rounded-[26px] px-5 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <p className="text-sm leading-7 text-[var(--muted)]">
+                コンボフローを作成・編集するにはログインしてください。
+              </p>
+              <Link href="/auth?mode=sign-in" className="primary-action">
+                ログインする
+              </Link>
+            </div>
           </section>
+        ) : (
+          <section className="panel rounded-[26px] px-5 py-4">
+            <label className="block">
+              <span className="mb-2 block text-sm text-[var(--muted)]">補足説明</span>
+              <textarea
+                value={summary}
+                onChange={(event) => setSummary(event.target.value)}
+                disabled={!isOwner}
+                className="min-h-20 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 disabled:opacity-60"
+                placeholder="例: 2MK始動の安定ルート。微歩きが必要な分岐だけ矢印に書きます。"
+              />
+            </label>
+            {post && !isOwner ? (
+              <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+                投稿者: {post.author_name} / 投稿日: {formatPostedAt(post.created_at)}
+              </p>
+            ) : null}
+          </section>
+        )}
+
+        <section className="relative rounded-[26px] border border-white/10 bg-black/15 p-1">
+          {session?.user && isOwner ? (
+            <div className="pointer-events-none absolute left-5 top-5 z-20">
+              <button
+                type="button"
+                onClick={addNode}
+                className="secondary-action pointer-events-auto min-h-0 px-4 py-3 text-sm"
+              >
+                ノードを追加
+              </button>
+            </div>
+          ) : null}
+
+          <ComboFlowCanvas
+            nodes={nodes}
+            edges={edges}
+            selectedNodeId={selectedNodeId}
+            interactive={Boolean(session?.user && isOwner)}
+            onSelectNode={setSelectedNodeId}
+            onMoveNode={(nodeId, nextX, nextY) => updateNode(nodeId, { x: nextX, y: nextY })}
+            onCreateEdge={addEdge}
+            onUpdateNode={updateNode}
+            onToggleNodeTag={toggleNodeTag}
+            onDeleteNode={removeNode}
+            onUpdateEdge={updateEdge}
+            onDeleteEdge={removeEdge}
+          />
         </section>
 
         {bottomAdSlot ? (
