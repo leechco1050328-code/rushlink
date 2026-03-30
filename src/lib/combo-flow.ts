@@ -77,22 +77,15 @@ export type ComboFlowPost = {
   flow_nodes: ComboFlowNode[];
   flow_edges: ComboFlowEdge[];
   created_at: string;
+  updated_at?: string;
 };
-
-export function getComboFlowHref(character: string) {
-  return `/combo-flow/${encodeURIComponent(character)}`;
-}
-
-export function decodeComboFlowCharacter(value: string) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
 
 export function isComboFlowCharacter(value: string): value is ComboFlowCharacter {
   return COMBO_FLOW_CHARACTERS.includes(value as ComboFlowCharacter);
+}
+
+export function getComboFlowDetailHref(id: number) {
+  return `/combo-flow/${id}`;
 }
 
 export function buildComboFlowTitle(nodes: ComboFlowNode[]) {

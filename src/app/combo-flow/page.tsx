@@ -1,5 +1,5 @@
 import { BrandPageHeader } from "@/components/brand-page-header";
-import { ComboFlowCatalog } from "@/components/combo-flow-catalog";
+import { ComboFlowDashboard } from "@/components/combo-flow-dashboard";
 
 export default function ComboFlowPage() {
   return (
@@ -10,11 +10,11 @@ export default function ComboFlowPage() {
           backHref="/"
           backLabel="トップへ戻る"
           kicker="Combo Flow"
-          title="キャラ別のコンボフロー"
-          description="キャラごとに、技ノードと矢印でスト6のコンボルートを整理します。カウンターやパニカン、微歩きやDRも図のまま共有できます。"
+          title="自分のコンボフロー管理"
+          description="キャラクターを選んで自分用のコンボフローページを作成し、ノードと矢印でルートを整理できます。"
         />
 
-        <ComboFlowCatalog />
+        <ComboFlowDashboard />
       </section>
     </main>
   );
