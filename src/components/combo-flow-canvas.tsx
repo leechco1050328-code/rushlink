@@ -501,6 +501,7 @@ export function ComboFlowCanvas({
                         return;
                       }
 
+                      event.preventDefault();
                       nodeDragRef.current = {
                         id: node.id,
                         startClientX: event.clientX,
@@ -511,9 +512,11 @@ export function ComboFlowCanvas({
                       };
                     }}
                     className={`flex h-full w-full flex-col items-start rounded-[20px] px-3 py-3 text-left ${
-                      interactive ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+                      interactive ? "cursor-grab select-none active:cursor-grabbing" : "cursor-default"
                     }`}
-                    style={{ touchAction: "none" }}
+                    style={{ touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }}
+                    draggable={false}
+                    onDragStart={(event) => event.preventDefault()}
                   >
                     <span className="text-sm font-semibold leading-5 text-white">
                       {node.move || "技を入力"}
