@@ -48,7 +48,71 @@ export const COMBO_FLOW_EDGE_HINTS = [
   "端限定",
 ] as const;
 
+export const COMBO_FLOW_MOVE_GROUPS = [
+  {
+    label: "通常技",
+    options: [
+      "弱P",
+      "中P",
+      "大P",
+      "弱K",
+      "中K",
+      "大K",
+      "しゃがみ弱P",
+      "しゃがみ中P",
+      "しゃがみ大P",
+      "しゃがみ弱K",
+      "しゃがみ中K",
+      "しゃがみ大K",
+      "ジャンプ弱P",
+      "ジャンプ中P",
+      "ジャンプ大P",
+      "ジャンプ弱K",
+      "ジャンプ中K",
+      "ジャンプ大K",
+    ],
+  },
+  {
+    label: "特殊技",
+    options: ["引き大P", "前大P", "溜め大P", "前中K", "前大K"],
+  },
+  {
+    label: "コマンド技",
+    options: [
+      "↓↘→+弱P",
+      "↓↘→+中P",
+      "↓↘→+大P",
+      "↓↘→+弱K",
+      "↓↘→+中K",
+      "↓↘→+大K",
+      "↓↙←+弱P",
+      "↓↙←+中P",
+      "↓↙←+大P",
+      "↓↙←+弱K",
+      "↓↙←+中K",
+      "↓↙←+大K",
+      "→↓↘+弱P",
+      "→↓↘+中P",
+      "→↓↘+大P",
+      "↓ため↑+K",
+      "←ため→+P",
+      "1回転+大P",
+      "1回転+大K",
+    ],
+  },
+  {
+    label: "SA",
+    options: ["SA1", "SA2", "SA3"],
+  },
+  {
+    label: "その他",
+    options: ["ジャンプ", "前ステップ", "後ろステップ", "ドライブラッシュ", "OD技"],
+  },
+] as const;
+
 export type ComboFlowNodeTag = (typeof COMBO_FLOW_NODE_TAGS)[number];
+export type ComboFlowMoveGroup = (typeof COMBO_FLOW_MOVE_GROUPS)[number];
+export type ComboFlowMoveGroupLabel = (typeof COMBO_FLOW_MOVE_GROUPS)[number]["label"];
 
 export type ComboFlowNode = {
   id: string;
@@ -79,6 +143,13 @@ export type ComboFlowPost = {
   created_at: string;
   updated_at?: string;
 };
+
+export function getComboFlowMoveGroupLabel(move: string): ComboFlowMoveGroupLabel | "" {
+  const group = COMBO_FLOW_MOVE_GROUPS.find((item) =>
+    item.options.some((option) => option === move),
+  );
+  return group?.label ?? "";
+}
 
 export function isComboFlowCharacter(value: string): value is ComboFlowCharacter {
   return COMBO_FLOW_CHARACTERS.includes(value as ComboFlowCharacter);

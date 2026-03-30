@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   COMBO_FLOW_EDGE_HINTS,
+  COMBO_FLOW_MOVE_GROUPS,
   COMBO_FLOW_NODE_TAGS,
+  getComboFlowMoveGroupLabel,
   type ComboFlowEdge,
   type ComboFlowNode,
   type ComboFlowNodeTag,
@@ -92,6 +94,21 @@ function getNodePanelPlacement(nodeX: number, canvasWidth: number) {
 
 function getEdgePanelPosition(value: number, max: number) {
   return clampPosition(value, Math.max(0, max));
+}
+
+function getMoveOptions(move: string) {
+  const groupLabel = getComboFlowMoveGroupLabel(move);
+  const group = COMBO_FLOW_MOVE_GROUPS.find((item) => item.label === groupLabel);
+
+  if (!group) {
+    return move ? [move] : [];
+  }
+
+  if (move && !group.options.some((option) => option === move)) {
+    return [move, ...group.options];
+  }
+
+  return [...group.options];
 }
 
 export function ComboFlowCanvas({
@@ -275,7 +292,7 @@ export function ComboFlowCanvas({
               </marker>
             </defs>
 
-          {edgeLayouts.map(({ edge, midX, midY, path }) => (
+            {edgeLayouts.map(({ edge, midX, midY, path }) => (
               <g
                 key={edge.id}
                 onMouseEnter={() => setHoveredEdgeId(edge.id)}
@@ -412,6 +429,8 @@ export function ComboFlowCanvas({
               interactive && (hoveredNodeId === node.id || selectedNodeId === node.id);
             const showNodeEditor =
               interactive && (hoveredNodeId === node.id || selectedNodeId === node.id);
+            const moveGroupLabel = getComboFlowMoveGroupLabel(node.move);
+            const moveOptions = getMoveOptions(node.move);
 
             return (
               <div
@@ -558,15 +577,44 @@ export function ComboFlowCanvas({
                     </div>
 
                     <label className="block">
+                      <span className="mb-1.5 block text-xs text-[var(--muted)]">カテゴリ</span>
+                      <select
+                        value={moveGroupLabel}
+                        onChange={(event) => {
+                          const nextGroup = COMBO_FLOW_MOVE_GROUPS.find(
+                            (item) => item.label === event.target.value,
+                          );
+                          onUpdateNode?.(node.id, {
+                            move: nextGroup?.options[0] ?? "",
+                          });
+                        }}
+                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-3 py-2.5 text-sm text-white outline-none"
+                      >
+                        <option value="">選択してください</option>
+                        {COMBO_FLOW_MOVE_GROUPS.map((group) => (
+                          <option key={group.label} value={group.label}>
+                            {group.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="mt-3 block">
                       <span className="mb-1.5 block text-xs text-[var(--muted)]">
                         技コマンド / 技強度
                       </span>
-                      <input
+                      <select
                         value={node.move}
                         onChange={(event) => onUpdateNode?.(node.id, { move: event.target.value })}
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35"
-                        placeholder="例: 2MK / 弱P / SA3"
-                      />
+                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-3 py-2.5 text-sm text-white outline-none"
+                      >
+                        <option value="">選択してください</option>
+                        {moveOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
                     </label>
 
                     <div className="mt-3">
