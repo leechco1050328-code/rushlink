@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { CharacterChip } from "@/components/character-chip";
@@ -10,14 +10,13 @@ import { SharePostActions } from "@/components/share-post-actions";
 import { getAdSenseMidSlot } from "@/lib/adsense";
 import {
   COMBO_FLOW_CHARACTERS,
-  COMBO_FLOW_EDGE_HINTS,
-  COMBO_FLOW_NODE_TAGS,
   buildComboFlowTitle,
   createEmptyComboNode,
   getComboFlowDetailHref,
   type ComboFlowCharacter,
   type ComboFlowEdge,
   type ComboFlowNode,
+  type ComboFlowNodeTag,
   type ComboFlowPost,
 } from "@/lib/combo-flow";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -85,11 +84,6 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   );
   const [isPending, startTransition] = useTransition();
 
-  const selectedNode = useMemo(
-    () => nodes.find((node) => node.id === selectedNodeId) ?? null,
-    [nodes, selectedNodeId],
-  );
-
   useEffect(() => {
     if (!supabase) {
       return;
@@ -111,6 +105,11 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
       if (props.mode === "create") {
         setIsOwner(Boolean(activeSession?.user));
+        setMessage(
+          activeSession?.user
+            ? "キャラクターを選んで、ノードをホバーしながらフローを組み立てます。"
+            : "コンボフローを作成するにはログインしてください。",
+        );
         return;
       }
 
@@ -149,7 +148,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       setIsOwner(activeSession?.user?.id === nextPost.user_id);
       setMessage(
         activeSession?.user?.id === nextPost.user_id
-          ? "自分のコンボフローを編集中です。"
+          ? "ノードをホバーすると技やラベルを編集できます。"
           : "公開中のコンボフローを表示しています。",
       );
     }
@@ -172,6 +171,21 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     );
   }
 
+  function toggleNodeTag(nodeId: string, tag: ComboFlowNodeTag) {
+    setNodes((current) =>
+      current.map((node) =>
+        node.id !== nodeId
+          ? node
+          : {
+              ...node,
+              tags: node.tags.includes(tag)
+                ? node.tags.filter((item) => item !== tag)
+                : [...node.tags, tag],
+            },
+      ),
+    );
+  }
+
   function removeNode(nodeId: string) {
     setNodes((current) => current.filter((node) => node.id !== nodeId));
     setEdges((current) =>
@@ -184,18 +198,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     const nextNode = createEmptyComboNode(nodes.length);
     setNodes((current) => [...current, nextNode]);
     setSelectedNodeId(nextNode.id);
-  }
-
-  function toggleNodeTag(tag: (typeof COMBO_FLOW_NODE_TAGS)[number]) {
-    if (!selectedNode) {
-      return;
-    }
-
-    updateNode(selectedNode.id, {
-      tags: selectedNode.tags.includes(tag)
-        ? selectedNode.tags.filter((item) => item !== tag)
-        : [...selectedNode.tags, tag],
-    });
+    setMessage("ノードを追加しました。ホバーして内容を入力できます。");
   }
 
   function addEdge(fromNodeId: string, toNodeId: string) {
@@ -219,6 +222,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         note: "",
       },
     ]);
+    setMessage("矢印を追加しました。ラベルをホバーすると補足を編集できます。");
   }
 
   function updateEdge(edgeId: string, patch: Partial<ComboFlowEdge>) {
@@ -319,8 +323,8 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     <main className="relative overflow-hidden">
       <div className="grid-noise absolute inset-0 opacity-40" />
 
-      <section className="relative flex min-h-screen flex-col gap-6 px-3 py-4 md:px-4 md:py-5">
-        <header className="panel flex flex-wrap items-center justify-between gap-4 rounded-[28px] px-5 py-4">
+      <section className="relative flex min-h-screen flex-col gap-4 px-2 py-3 md:px-3 md:py-4">
+        <header className="panel flex flex-wrap items-center justify-between gap-4 rounded-[26px] px-5 py-4">
           <div className="space-y-2">
             <Link
               href="/combo-flow"
@@ -333,11 +337,24 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             </h1>
             <p className="text-sm leading-7 text-[var(--muted)]">{message}</p>
           </div>
-          {post ? <SharePostActions title={post.title} path={getComboFlowDetailHref(post.id)} /> : null}
+
+          <div className="flex flex-wrap items-center gap-2">
+            {isOwner && session?.user ? (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isPending}
+                className="primary-action min-w-[11rem] disabled:opacity-60"
+              >
+                {isPending ? "保存中..." : props.mode === "create" ? "作成する" : "更新する"}
+              </button>
+            ) : null}
+            {post ? <SharePostActions title={post.title} path={getComboFlowDetailHref(post.id)} /> : null}
+          </div>
         </header>
 
-        <section className="grid min-h-[calc(100vh-220px)] gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="panel self-start rounded-[28px] px-5 py-5 xl:sticky xl:top-4">
+        <section className="grid min-h-[calc(100vh-180px)] gap-3 xl:grid-cols-[232px_minmax(0,1fr)]">
+          <aside className="panel self-start rounded-[26px] px-4 py-4 xl:sticky xl:top-3">
             {!session?.user ? (
               <div className="space-y-4">
                 <p className="text-sm leading-7 text-[var(--muted)]">
@@ -348,14 +365,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold text-white">設定</h2>
-                  <p className="text-sm leading-7 text-[var(--muted)]">
-                    キャラ選択、補足説明、ノード編集をここで行います。
-                  </p>
-                </div>
-
+              <div className="space-y-4">
                 <label className="block">
                   <span className="mb-2 block text-sm text-[var(--muted)]">キャラクター</span>
                   <select
@@ -375,188 +385,23 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
                 {characterName ? <CharacterChip name={characterName} size="md" tone="accent" /> : null}
 
-                <label className="block">
-                  <span className="mb-2 block text-sm text-[var(--muted)]">補足説明</span>
-                  <textarea
-                    value={summary}
-                    onChange={(event) => setSummary(event.target.value)}
-                    disabled={!isOwner}
-                    className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 disabled:opacity-60"
-                    placeholder="例: 2MK始動の安定ルート。微歩きが必要な分岐だけ矢印に書きます。"
-                  />
-                </label>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-lg font-semibold text-white">ノード</h3>
-                    {isOwner ? (
-                      <button
-                        type="button"
-                        onClick={addNode}
-                        className="secondary-action min-h-0 px-4 py-2 text-sm"
-                      >
-                        追加
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="grid gap-3">
-                    {nodes.map((node, index) => (
-                      <button
-                        key={node.id}
-                        type="button"
-                        onClick={() => setSelectedNodeId(node.id)}
-                        className={`rounded-[20px] border px-4 py-3 text-left ${
-                          selectedNodeId === node.id
-                            ? "border-[var(--secondary)] bg-[var(--secondary)]/10"
-                            : "border-white/10 bg-black/20"
-                        }`}
-                      >
-                        <span className="block text-xs text-[var(--muted)]">ノード {index + 1}</span>
-                        <span className="mt-1 block text-sm font-semibold text-white">
-                          {node.move || "技を入力"}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedNode ? (
-                  <div className="space-y-4 rounded-[24px] border border-white/10 bg-black/20 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-lg font-semibold text-white">選択中ノード</h3>
-                      {isOwner && nodes.length > 2 ? (
-                        <button
-                          type="button"
-                          onClick={() => removeNode(selectedNode.id)}
-                          className="secondary-action min-h-0 px-3 py-2 text-xs"
-                        >
-                          削除
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <label className="block">
-                      <span className="mb-2 block text-sm text-[var(--muted)]">技コマンド / 技強度</span>
-                      <input
-                        value={selectedNode.move}
-                        onChange={(event) => updateNode(selectedNode.id, { move: event.target.value })}
-                        disabled={!isOwner}
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 disabled:opacity-60"
-                        placeholder="例: 2MK / 弱P / OD波動 / SA3"
-                      />
-                    </label>
-
-                    <div>
-                      <span className="mb-2 block text-sm text-[var(--muted)]">ラベル</span>
-                      <div className="flex flex-wrap gap-2">
-                        {COMBO_FLOW_NODE_TAGS.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => toggleNodeTag(tag)}
-                            disabled={!isOwner}
-                            className={`pill-button min-h-0 px-3 py-2 text-xs ${
-                              selectedNode.tags.includes(tag)
-                                ? "bg-[var(--secondary)]/18 text-[var(--secondary)]"
-                                : "border border-white/10 bg-white/5 text-[var(--muted)]"
-                            } disabled:opacity-60`}
-                          >
-                            {tag}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <label className="block">
-                      <span className="mb-2 block text-sm text-[var(--muted)]">メモ</span>
-                      <input
-                        value={selectedNode.note}
-                        onChange={(event) => updateNode(selectedNode.id, { note: event.target.value })}
-                        disabled={!isOwner}
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 disabled:opacity-60"
-                        placeholder="例: 先端だと届かない / 画面端限定"
-                      />
-                    </label>
-                  </div>
-                ) : (
-                  <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 text-sm leading-7 text-[var(--muted)]">
-                    ノードを選ぶと、ここで内容を編集できます。
-                  </div>
-                )}
-
-                <div className="space-y-3 rounded-[24px] border border-white/10 bg-black/20 p-4">
-                  <h3 className="text-lg font-semibold text-white">矢印の補足</h3>
-                  {edges.length === 0 ? (
-                    <p className="text-sm leading-7 text-[var(--muted)]">
-                      ノードの端子をドラッグして接続すると、ここに矢印が追加されます。
-                    </p>
-                  ) : (
-                    <div className="grid gap-4">
-                      {edges.map((edge, index) => (
-                        <article key={edge.id} className="rounded-[20px] border border-white/10 bg-white/5 p-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-xs text-[var(--muted)]">矢印 {index + 1}</span>
-                            {isOwner ? (
-                              <button
-                                type="button"
-                                onClick={() => removeEdge(edge.id)}
-                                className="secondary-action min-h-0 px-3 py-2 text-xs"
-                              >
-                                削除
-                              </button>
-                            ) : null}
-                          </div>
-
-                          <label className="mt-3 block">
-                            <span className="mb-2 block text-sm text-[var(--muted)]">補足動作</span>
-                            <input
-                              list="combo-edge-hints"
-                              value={edge.action}
-                              onChange={(event) => updateEdge(edge.id, { action: event.target.value })}
-                              disabled={!isOwner}
-                              className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 disabled:opacity-60"
-                              placeholder="例: 微歩き / DR / 最速"
-                            />
-                          </label>
-
-                          <label className="mt-3 block">
-                            <span className="mb-2 block text-sm text-[var(--muted)]">メモ</span>
-                            <input
-                              value={edge.note}
-                              onChange={(event) => updateEdge(edge.id, { note: event.target.value })}
-                              disabled={!isOwner}
-                              className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/35 disabled:opacity-60"
-                              placeholder="例: 少し待つ / 密着限定"
-                            />
-                          </label>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                  <datalist id="combo-edge-hints">
-                    {COMBO_FLOW_EDGE_HINTS.map((hint) => (
-                      <option key={hint} value={hint} />
-                    ))}
-                  </datalist>
-                </div>
-
                 {isOwner ? (
                   <button
                     type="button"
-                    onClick={handleSave}
-                    disabled={isPending}
-                    className="primary-action w-full disabled:opacity-60"
+                    onClick={addNode}
+                    className="secondary-action w-full min-h-0 px-4 py-3 text-sm"
                   >
-                    {isPending
-                      ? "保存中..."
-                      : props.mode === "create"
-                        ? "コンボフローを作成する"
-                        : "コンボフローを更新する"}
+                    ノードを追加
                   </button>
-                ) : post ? (
-                  <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 text-sm leading-7 text-[var(--muted)]">
-                    このフローは閲覧専用です。投稿者: {post.author_name}
+                ) : null}
+
+                <p className="text-xs leading-6 text-[var(--muted)]">
+                  ノードにマウスオーバーすると、技・ラベル・メモをその場で編集できます。
+                </p>
+
+                {post && !isOwner ? (
+                  <div className="rounded-[22px] border border-white/10 bg-black/20 p-4 text-sm leading-7 text-[var(--muted)]">
+                    投稿者: {post.author_name}
                     <br />
                     投稿日: {formatPostedAt(post.created_at)}
                   </div>
@@ -565,7 +410,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             )}
           </aside>
 
-          <section className="panel rounded-[28px] p-2 md:p-3">
+          <section className="rounded-[26px] border border-white/10 bg-black/15 p-1">
             <ComboFlowCanvas
               nodes={nodes}
               edges={edges}
@@ -574,6 +419,11 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
               onSelectNode={setSelectedNodeId}
               onMoveNode={(nodeId, nextX, nextY) => updateNode(nodeId, { x: nextX, y: nextY })}
               onCreateEdge={addEdge}
+              onUpdateNode={updateNode}
+              onToggleNodeTag={toggleNodeTag}
+              onDeleteNode={removeNode}
+              onUpdateEdge={updateEdge}
+              onDeleteEdge={removeEdge}
             />
           </section>
         </section>
