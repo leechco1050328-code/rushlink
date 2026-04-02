@@ -575,7 +575,7 @@ export function ComboFlowCanvas({
                 onMouseLeave={() => setHoveredNodeId((current) => (current === node.id ? null : current))}
               >
                 <div
-                  className={`relative rounded-[20px] border shadow-[0_16px_34px_rgba(0,0,0,0.28)] transition ${
+                  className={`relative overflow-hidden rounded-[20px] border shadow-[0_16px_34px_rgba(0,0,0,0.28)] transition ${
                     selectedNodeId === node.id
                       ? "border-[var(--secondary)] bg-[var(--secondary)]/14"
                       : isEdgeTarget
@@ -583,7 +583,7 @@ export function ComboFlowCanvas({
                         : "border-white/10 bg-black/70"
                   }`}
                   style={{
-                    minHeight: `${NODE_HEIGHT}px`,
+                    height: `${NODE_HEIGHT}px`,
                   }}
                 >
                   <button
@@ -624,7 +624,7 @@ export function ComboFlowCanvas({
                         moved: false,
                       };
                     }}
-                    className={`flex h-full w-full flex-col items-start rounded-[20px] px-3 py-3 text-left ${
+                    className={`absolute inset-0 flex h-full w-full flex-col items-start rounded-[20px] px-3 py-3 text-left ${
                       interactive ? "cursor-grab select-none active:cursor-grabbing" : "cursor-default"
                     }`}
                     style={{ touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }}
