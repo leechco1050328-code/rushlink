@@ -114,6 +114,8 @@ export const COMBO_FLOW_MOVE_GROUPS = [
 export type ComboFlowNodeTag = (typeof COMBO_FLOW_NODE_TAGS)[number];
 export type ComboFlowMoveGroup = (typeof COMBO_FLOW_MOVE_GROUPS)[number];
 export type ComboFlowMoveGroupLabel = (typeof COMBO_FLOW_MOVE_GROUPS)[number]["label"];
+export const COMBO_FLOW_HANDLE_SIDES = ["left", "right", "top", "bottom"] as const;
+export type ComboFlowNodeHandleSide = (typeof COMBO_FLOW_HANDLE_SIDES)[number];
 
 export type ComboFlowNode = {
   id: string;
@@ -128,6 +130,8 @@ export type ComboFlowEdge = {
   id: string;
   from: string;
   to: string;
+  fromSide?: ComboFlowNodeHandleSide;
+  toSide?: ComboFlowNodeHandleSide;
   action: string;
   note: string;
 };
@@ -184,11 +188,19 @@ export function createEmptyComboNode(index: number): ComboFlowNode {
   };
 }
 
-export function createEmptyComboEdge(index: number, from = "", to = ""): ComboFlowEdge {
+export function createEmptyComboEdge(
+  index: number,
+  from = "",
+  to = "",
+  fromSide: ComboFlowNodeHandleSide = "right",
+  toSide: ComboFlowNodeHandleSide = "left",
+): ComboFlowEdge {
   return {
     id: `edge-${Date.now()}-${index}`,
     from,
     to,
+    fromSide,
+    toSide,
     action: "",
     note: "",
   };

@@ -15,6 +15,7 @@ import {
   getComboFlowDetailHref,
   type ComboFlowCharacter,
   type ComboFlowEdge,
+  type ComboFlowNodeHandleSide,
   type ComboFlowNode,
   type ComboFlowNodeTag,
   type ComboFlowPost,
@@ -194,12 +195,23 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     setMessage("ノードを追加しました。ホバーして内容を入力できます。");
   }
 
-  function addEdge(fromNodeId: string, toNodeId: string) {
+  function addEdge(
+    fromNodeId: string,
+    toNodeId: string,
+    fromSide: ComboFlowNodeHandleSide,
+    toSide: ComboFlowNodeHandleSide,
+  ) {
     if (!isOwner) {
       return;
     }
 
-    const exists = edges.some((edge) => edge.from === fromNodeId && edge.to === toNodeId);
+    const exists = edges.some(
+      (edge) =>
+        edge.from === fromNodeId &&
+        edge.to === toNodeId &&
+        (edge.fromSide ?? "right") === fromSide &&
+        (edge.toSide ?? "left") === toSide,
+    );
     if (exists) {
       setMessage("同じ接続はすでに存在しています。");
       return;
@@ -211,6 +223,8 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         id: `edge-${Date.now()}-${current.length}`,
         from: fromNodeId,
         to: toNodeId,
+        fromSide,
+        toSide,
         action: "",
         note: "",
       },
