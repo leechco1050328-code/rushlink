@@ -632,17 +632,10 @@ export function ComboFlowCanvas({
                     onDragStart={(event) => event.preventDefault()}
                   >
                     <span className="line-clamp-2 text-xl font-bold leading-[1.08] tracking-[0.01em] text-white">
-                      {node.move || "技を入力"}
+                      {node.move || "弱P"}
                     </span>
-                    {node.note ? (
-                      <span className="mt-1 line-clamp-1 text-[10px] leading-4 text-white/40">
-                        {node.note}
-                      </span>
-                    ) : (
-                      <span className="mt-1 block h-4" />
-                    )}
                     {node.tags.length ? (
-                      <div className="mt-auto flex max-h-10 flex-wrap gap-1 overflow-hidden">
+                      <div className="mt-2 flex max-h-10 flex-wrap gap-1 overflow-hidden">
                         {node.tags.slice(0, 3).map((tag) => (
                           <span
                             key={tag}
@@ -652,6 +645,11 @@ export function ComboFlowCanvas({
                           </span>
                         ))}
                       </div>
+                    ) : null}
+                    {node.note ? (
+                      <span className="mt-2 line-clamp-1 text-[10px] leading-4 text-white/40">
+                        {node.note}
+                      </span>
                     ) : null}
                   </button>
 

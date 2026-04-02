@@ -180,7 +180,7 @@ export function buildComboFlowTitle(nodes: ComboFlowNode[]) {
 export function createEmptyComboNode(index: number): ComboFlowNode {
   return {
     id: `node-${Date.now()}-${index}`,
-    move: "",
+    move: "弱P",
     tags: index === 0 ? ["始動"] : [],
     note: "",
     x: 80 + index * 220,
