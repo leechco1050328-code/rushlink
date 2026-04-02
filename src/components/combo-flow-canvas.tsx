@@ -14,7 +14,7 @@ import {
 } from "@/lib/combo-flow";
 
 const NODE_WIDTH = 160;
-const NODE_HEIGHT = 88;
+const NODE_HEIGHT = 108;
 const MIN_CANVAS_WIDTH = 2200;
 const MIN_CANVAS_HEIGHT = 1200;
 const HANDLE_SIZE = 20;
@@ -631,25 +631,27 @@ export function ComboFlowCanvas({
                     draggable={false}
                     onDragStart={(event) => event.preventDefault()}
                   >
-                    <span className="text-sm font-semibold leading-5 text-white">
+                    <span className="line-clamp-2 text-xl font-bold leading-[1.08] tracking-[0.01em] text-white">
                       {node.move || "技を入力"}
                     </span>
+                    {node.note ? (
+                      <span className="mt-1 line-clamp-1 text-[10px] leading-4 text-white/40">
+                        {node.note}
+                      </span>
+                    ) : (
+                      <span className="mt-1 block h-4" />
+                    )}
                     {node.tags.length ? (
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      <div className="mt-auto flex max-h-10 flex-wrap gap-1 overflow-hidden">
                         {node.tags.slice(0, 3).map((tag) => (
                           <span
                             key={tag}
-                            className="rounded-full bg-white/8 px-2 py-1 text-[9px] text-[var(--accent-soft)]"
+                            className="rounded-full border border-white/8 bg-white/6 px-2.5 py-1 text-[10px] leading-none text-[var(--accent-soft)]"
                           >
                             {tag}
                           </span>
                         ))}
                       </div>
-                    ) : null}
-                    {node.note ? (
-                      <span className="mt-2 text-[11px] leading-4 text-[var(--muted)]">
-                        {node.note}
-                      </span>
                     ) : null}
                   </button>
 
