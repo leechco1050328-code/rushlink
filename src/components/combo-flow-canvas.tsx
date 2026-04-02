@@ -815,15 +815,6 @@ export function ComboFlowCanvas({
                       </div>
                     </div>
 
-                    <label className="mt-3 block">
-                      <span className="mb-1.5 block text-xs text-[var(--muted)]">メモ</span>
-                      <input
-                        value={node.note}
-                        onChange={(event) => onUpdateNode?.(node.id, { note: event.target.value })}
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/35"
-                        placeholder="例: 密着限定 / 端限定"
-                      />
-                    </label>
                   </div>
                 ) : null}
               </div>
