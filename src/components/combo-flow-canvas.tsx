@@ -14,7 +14,7 @@ import {
 } from "@/lib/combo-flow";
 
 const NODE_WIDTH = 160;
-const NODE_HEIGHT = 108;
+const NODE_HEIGHT = 96;
 const MIN_CANVAS_WIDTH = 2200;
 const MIN_CANVAS_HEIGHT = 1200;
 const HANDLE_SIZE = 20;
@@ -647,12 +647,6 @@ export function ComboFlowCanvas({
                       </div>
                     ) : null}
                   </button>
-
-                  {hoveredNodeId === node.id && node.note ? (
-                    <div className="pointer-events-none absolute left-3 right-3 top-[calc(100%+8px)] z-20 rounded-2xl border border-white/10 bg-[#0a1324]/94 px-3 py-2 text-[11px] leading-4 text-[var(--muted)] shadow-[0_14px_30px_rgba(0,0,0,0.28)]">
-                      {node.note}
-                    </div>
-                  ) : null}
 
                   {showNodeToolbar ? (
                     <div className="absolute right-2 top-2 z-20 flex items-center gap-1">
