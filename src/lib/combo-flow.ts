@@ -29,6 +29,7 @@ export const COMBO_FLOW_CHARACTERS = [
 export type ComboFlowCharacter = (typeof COMBO_FLOW_CHARACTERS)[number];
 
 export const COMBO_FLOW_NODE_TAGS = [
+  "キャンセルラッシュ",
   "通常ヒット",
   "カウンター",
   "パニカン",
