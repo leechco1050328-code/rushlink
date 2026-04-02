@@ -14,7 +14,7 @@ import {
 } from "@/lib/combo-flow";
 
 const NODE_WIDTH = 160;
-const NODE_HEIGHT = 96;
+const NODE_HEIGHT = 82;
 const MIN_CANVAS_WIDTH = 2200;
 const MIN_CANVAS_HEIGHT = 1200;
 const HANDLE_SIZE = 20;
