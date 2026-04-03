@@ -15,8 +15,8 @@ import {
   getComboFlowDetailHref,
   type ComboFlowCharacter,
   type ComboFlowEdge,
-  type ComboFlowNodeHandleSide,
   type ComboFlowNode,
+  type ComboFlowNodeHandleSide,
   type ComboFlowNodeTag,
   type ComboFlowPost,
 } from "@/lib/combo-flow";
@@ -65,15 +65,14 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const [post, setPost] = useState<ComboFlowPost | null>(null);
   const [isOwner, setIsOwner] = useState(props.mode === "create");
   const [characterName, setCharacterName] = useState<ComboFlowCharacter | "">("");
-  const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [nodes, setNodes] = useState<ComboFlowNode[]>(createInitialNodes());
   const [edges, setEdges] = useState<ComboFlowEdge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [, setMessage] = useState(
     props.mode === "create"
-      ? "新しいコンボフローを作成します。"
-      : "コンボフローを読み込んでいます...",
+      ? "新しいコンボフローを作成できます。"
+      : "コンボフローを読み込んでいます。",
   );
   const [isPending, startTransition] = useTransition();
 
@@ -100,8 +99,8 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         setIsOwner(Boolean(activeSession?.user));
         setMessage(
           activeSession?.user
-            ? "新しいコンボフローを編集中です。"
-            : "コンボフローを作成するにはログインしてください。",
+            ? "新しいコンボフローを編集できます。"
+            : "コンボフローを作るにはログインしてください。",
         );
         return;
       }
@@ -130,7 +129,6 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
       const nextPost = data as ComboFlowPost;
       setPost(nextPost);
-      setTitle(nextPost.title ?? "");
       setCharacterName(
         COMBO_FLOW_CHARACTERS.includes(nextPost.character_name as ComboFlowCharacter)
           ? (nextPost.character_name as ComboFlowCharacter)
@@ -142,7 +140,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       setIsOwner(activeSession?.user?.id === nextPost.user_id);
       setMessage(
         activeSession?.user?.id === nextPost.user_id
-          ? "ノードをホバーすると技やラベルを編集できます。"
+          ? "ノードをホバーして内容を編集できます。"
           : "公開中のコンボフローを表示しています。",
       );
     }
@@ -192,7 +190,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     const nextNode = createEmptyComboNode(nodes.length);
     setNodes((current) => [...current, nextNode]);
     setSelectedNodeId(nextNode.id);
-    setMessage("ノードを追加しました。ホバーして内容を入力できます。");
+    setMessage("ノードを追加しました。");
   }
 
   function addEdge(
@@ -212,8 +210,9 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         (edge.fromSide ?? "right") === fromSide &&
         (edge.toSide ?? "left") === toSide,
     );
+
     if (exists) {
-      setMessage("同じ接続はすでに存在しています。");
+      setMessage("同じ接続がすでにあります。");
       return;
     }
 
@@ -229,7 +228,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         note: "",
       },
     ]);
-    setMessage("矢印を追加しました。ラベルをホバーすると補足を編集できます。");
+    setMessage("接続を追加しました。");
   }
 
   function updateEdge(edgeId: string, patch: Partial<ComboFlowEdge>) {
@@ -255,14 +254,14 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
     const nextNodes = normalizeNodes(nodes);
     if (nextNodes.length < 2) {
-      setMessage("最低2つの技ノードを入れてください。");
+      setMessage("最低2つのノードを入れてください。");
       return;
     }
 
     const nodeIds = new Set(nextNodes.map((node) => node.id));
     const nextEdges = normalizeEdges(edges, nodeIds);
     if (nextEdges.length === 0) {
-      setMessage("ノード同士を矢印で1本以上つないでください。");
+      setMessage("接続を1本以上作ってください。");
       return;
     }
 
@@ -270,7 +269,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       try {
         const displayName = String(session.user.user_metadata.display_name ?? "").trim();
         const authorName = displayName || (session.user.email ?? "").split("@")[0] || "プレイヤー";
-        const resolvedTitle = title.trim() || buildComboFlowTitle(nextNodes);
+        const resolvedTitle = buildComboFlowTitle(nextNodes);
 
         if (props.mode === "create") {
           const { data, error } = await supabase
@@ -317,8 +316,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           throw error;
         }
 
-        const nextPost = data as ComboFlowPost;
-        setPost(nextPost);
+        setPost(data as ComboFlowPost);
         setMessage("コンボフローを更新しました。");
       } catch (error: unknown) {
         setMessage(`保存に失敗しました: ${getMessageFromError(error)}`);
@@ -339,21 +337,8 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             >
               コンボフロー管理へ戻る
             </Link>
-            <label className="block">
-              <span className="sr-only">タイトル</span>
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                disabled={!isOwner}
-                className="w-full border-none bg-transparent px-0 py-0 text-3xl font-bold tracking-tight text-white outline-none placeholder:text-white/45 disabled:opacity-70"
-                placeholder={props.mode === "create" ? "タイトルを入力" : "コンボフロータイトル"}
-              />
-            </label>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
             {session?.user ? (
-              <div className="min-w-[14rem]">
+              <div className="max-w-[18rem]">
                 <label className="sr-only" htmlFor="combo-flow-character">
                   キャラクター
                 </label>
@@ -372,7 +357,12 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
                   ))}
                 </select>
               </div>
+            ) : characterName ? (
+              <CharacterChip name={characterName} size="md" tone="accent" />
             ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             {characterName ? <CharacterChip name={characterName} size="md" tone="accent" /> : null}
             {isOwner && session?.user ? (
               <button
