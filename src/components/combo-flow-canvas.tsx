@@ -14,7 +14,7 @@ import {
 } from "@/lib/combo-flow";
 
 const NODE_WIDTH = 160;
-const NODE_HEIGHT = 82;
+const NODE_MIN_HEIGHT = 82;
 const MIN_CANVAS_WIDTH = 2200;
 const MIN_CANVAS_HEIGHT = 1200;
 const HANDLE_SIZE = 20;
@@ -120,30 +120,34 @@ function getSideVector(side: ComboFlowNodeHandleSide) {
   }
 }
 
-function getNodeHandlePoint(node: ComboFlowNode, side: ComboFlowNodeHandleSide) {
+function getNodeHandlePoint(
+  node: ComboFlowNode,
+  side: ComboFlowNodeHandleSide,
+  nodeHeight: number,
+) {
   switch (side) {
     case "left":
-      return { x: node.x, y: node.y + NODE_HEIGHT / 2 };
+      return { x: node.x, y: node.y + nodeHeight / 2 };
     case "right":
-      return { x: node.x + NODE_WIDTH, y: node.y + NODE_HEIGHT / 2 };
+      return { x: node.x + NODE_WIDTH, y: node.y + nodeHeight / 2 };
     case "top":
       return { x: node.x + NODE_WIDTH / 2, y: node.y };
     case "bottom":
-      return { x: node.x + NODE_WIDTH / 2, y: node.y + NODE_HEIGHT };
+      return { x: node.x + NODE_WIDTH / 2, y: node.y + nodeHeight };
   }
 }
 
-function getHandleStyle(side: ComboFlowNodeHandleSide) {
+function getHandleStyle(side: ComboFlowNodeHandleSide, nodeHeight: number) {
   switch (side) {
     case "left":
       return {
         left: `${-HANDLE_SIZE / 2}px`,
-        top: `${NODE_HEIGHT / 2 - HANDLE_SIZE / 2}px`,
+        top: `${nodeHeight / 2 - HANDLE_SIZE / 2}px`,
       };
     case "right":
       return {
         right: `${-HANDLE_SIZE / 2}px`,
-        top: `${NODE_HEIGHT / 2 - HANDLE_SIZE / 2}px`,
+        top: `${nodeHeight / 2 - HANDLE_SIZE / 2}px`,
       };
     case "top":
       return {
@@ -178,12 +182,17 @@ function getCurvePath(
   return `M ${fromX} ${fromY} C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${toX} ${toY}`;
 }
 
-function getNearestHandleSide(node: ComboFlowNode, pointX: number, pointY: number) {
+function getNearestHandleSide(
+  node: ComboFlowNode,
+  pointX: number,
+  pointY: number,
+  nodeHeight: number,
+) {
   let closestSide: ComboFlowNodeHandleSide = "left";
   let closestDistance = Number.POSITIVE_INFINITY;
 
   for (const side of COMBO_FLOW_HANDLE_SIDES) {
-    const handlePoint = getNodeHandlePoint(node, side);
+    const handlePoint = getNodeHandlePoint(node, side, nodeHeight);
     const distance = Math.hypot(pointX - handlePoint.x, pointY - handlePoint.y);
 
     if (distance < closestDistance) {
@@ -225,6 +234,7 @@ export function ComboFlowCanvas({
   onDeleteEdge,
 }: ComboFlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const nodeDragRef = useRef<DragNodeState | null>(null);
   const panCanvasRef = useRef<PanCanvasState | null>(null);
   const suppressClickNodeIdRef = useRef<string | null>(null);
@@ -233,16 +243,60 @@ export function ComboFlowCanvas({
   const [activeEdgeId, setActiveEdgeId] = useState<string | null>(null);
   const [activeNodeEditorId, setActiveNodeEditorId] = useState<string | null>(null);
   const [edgeDrag, setEdgeDrag] = useState<DragEdgeState | null>(null);
+  const [nodeHeights, setNodeHeights] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      setNodeHeights((current) => {
+        let changed = false;
+        const next = { ...current };
+
+        for (const entry of entries) {
+          const nodeId = entry.target.getAttribute("data-node-id");
+
+          if (!nodeId) {
+            continue;
+          }
+
+          const measuredHeight = Math.max(NODE_MIN_HEIGHT, Math.ceil(entry.contentRect.height));
+
+          if (next[nodeId] !== measuredHeight) {
+            next[nodeId] = measuredHeight;
+            changed = true;
+          }
+        }
+
+        return changed ? next : current;
+      });
+    });
+
+    for (const node of nodes) {
+      const nodeElement = nodeRefs.current[node.id];
+
+      if (nodeElement) {
+        observer.observe(nodeElement);
+      }
+    }
+
+    return () => observer.disconnect();
+  }, [nodes]);
 
   const canvasSize = useMemo(() => {
     const farthestX = Math.max(0, ...nodes.map((node) => node.x + NODE_WIDTH + 240));
-    const farthestY = Math.max(0, ...nodes.map((node) => node.y + NODE_HEIGHT + 260));
+    const farthestY = Math.max(
+      0,
+      ...nodes.map((node) => node.y + (nodeHeights[node.id] ?? NODE_MIN_HEIGHT) + 260),
+    );
 
     return {
       width: Math.max(MIN_CANVAS_WIDTH, farthestX),
       height: Math.max(MIN_CANVAS_HEIGHT, farthestY),
     };
-  }, [nodes]);
+  }, [nodeHeights, nodes]);
 
   const edgeLayouts = useMemo(() => {
     return edges
@@ -256,8 +310,16 @@ export function ComboFlowCanvas({
 
         const fromSide = edge.fromSide ?? "right";
         const toSide = edge.toSide ?? "left";
-        const fromPoint = getNodeHandlePoint(fromNode, fromSide);
-        const toPoint = getNodeHandlePoint(toNode, toSide);
+        const fromPoint = getNodeHandlePoint(
+          fromNode,
+          fromSide,
+          nodeHeights[fromNode.id] ?? NODE_MIN_HEIGHT,
+        );
+        const toPoint = getNodeHandlePoint(
+          toNode,
+          toSide,
+          nodeHeights[toNode.id] ?? NODE_MIN_HEIGHT,
+        );
 
         return {
           edge,
@@ -280,7 +342,7 @@ export function ComboFlowCanvas({
         } satisfies EdgeLayout;
       })
       .filter((value): value is EdgeLayout => Boolean(value));
-  }, [edges, nodes]);
+  }, [edges, nodeHeights, nodes]);
 
   useEffect(() => {
     if (!interactive) {
@@ -306,7 +368,7 @@ export function ComboFlowCanvas({
         );
         const nextY = clampPosition(
           nodeDragRef.current.startNodeY + deltaY,
-          canvasSize.height - NODE_HEIGHT,
+          canvasSize.height - (nodeHeights[nodeDragRef.current.id] ?? NODE_MIN_HEIGHT),
         );
 
         onMoveNode(nodeDragRef.current.id, nextX, nextY);
@@ -353,7 +415,7 @@ export function ComboFlowCanvas({
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [canvasSize.height, canvasSize.width, edgeDrag, interactive, onMoveNode]);
+  }, [canvasSize.height, canvasSize.width, edgeDrag, interactive, nodeHeights, onMoveNode]);
 
   return (
     <div className="rounded-[26px] border border-white/10 bg-black/20">
@@ -549,6 +611,7 @@ export function ComboFlowCanvas({
           })}
 
           {nodes.map((node) => {
+            const nodeHeight = nodeHeights[node.id] ?? NODE_MIN_HEIGHT;
             const showHandles =
               interactive &&
               (hoveredNodeId === node.id ||
@@ -575,6 +638,10 @@ export function ComboFlowCanvas({
                 onMouseLeave={() => setHoveredNodeId((current) => (current === node.id ? null : current))}
               >
                 <div
+                  ref={(element) => {
+                    nodeRefs.current[node.id] = element;
+                  }}
+                  data-node-id={node.id}
                   className={`relative overflow-hidden rounded-[20px] border shadow-[0_16px_34px_rgba(0,0,0,0.28)] transition ${
                     selectedNodeId === node.id
                       ? "border-[var(--secondary)] bg-[var(--secondary)]/14"
@@ -583,7 +650,7 @@ export function ComboFlowCanvas({
                         : "border-white/10 bg-black/70"
                   }`}
                   style={{
-                    height: `${NODE_HEIGHT}px`,
+                    minHeight: `${NODE_MIN_HEIGHT}px`,
                   }}
                 >
                   <button
@@ -605,7 +672,12 @@ export function ComboFlowCanvas({
 
                       event.stopPropagation();
                       const point = getCanvasPoint(canvasRef.current, event.clientX, event.clientY);
-                      const targetSide = getNearestHandleSide(node, point.x, point.y);
+                      const targetSide = getNearestHandleSide(
+                        node,
+                        point.x,
+                        point.y,
+                        nodeHeight,
+                      );
                       onCreateEdge(edgeDrag.sourceId, node.id, edgeDrag.sourceSide, targetSide);
                       setEdgeDrag(null);
                     }}
@@ -624,7 +696,7 @@ export function ComboFlowCanvas({
                         moved: false,
                       };
                     }}
-                    className={`absolute inset-0 flex h-full w-full flex-col items-start rounded-[20px] px-3 py-3 text-left ${
+                    className={`flex w-full flex-col items-start rounded-[20px] px-3 py-3 text-left ${
                       interactive ? "cursor-grab select-none active:cursor-grabbing" : "cursor-default"
                     }`}
                     style={{ touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }}
@@ -635,8 +707,8 @@ export function ComboFlowCanvas({
                       {node.move || "弱P"}
                     </span>
                     {node.tags.length ? (
-                      <div className="mt-2 flex max-h-10 flex-wrap gap-1 overflow-hidden">
-                        {node.tags.slice(0, 3).map((tag) => (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {node.tags.map((tag) => (
                           <span
                             key={tag}
                             className="rounded-full border border-white/8 bg-white/6 px-2.5 py-1 text-[10px] leading-none text-[var(--accent-soft)]"
@@ -681,7 +753,7 @@ export function ComboFlowCanvas({
                   {showHandles ? (
                     <>
                       {COMBO_FLOW_HANDLE_SIDES.map((side) => {
-                        const handlePoint = getNodeHandlePoint(node, side);
+                        const handlePoint = getNodeHandlePoint(node, side, nodeHeight);
 
                         return (
                           <button
@@ -690,7 +762,7 @@ export function ComboFlowCanvas({
                             aria-label={`接続端子 ${side}`}
                             className="absolute z-10 rounded-full border border-[var(--secondary)] bg-[#09111f] shadow-[0_0_0_4px_rgba(142,201,255,0.14)]"
                             style={{
-                              ...getHandleStyle(side),
+                              ...getHandleStyle(side, nodeHeight),
                               width: `${HANDLE_SIZE}px`,
                               height: `${HANDLE_SIZE}px`,
                             }}
