@@ -41,6 +41,10 @@ type ComboFlowDraft = {
 
 const CREATE_DRAFT_STORAGE_KEY = "rushlink-combo-flow-create-draft";
 
+function getComboFlowCacheKey(postId: number) {
+  return `rushlink-combo-flow-post-${postId}`;
+}
+
 function getMessageFromError(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -115,6 +119,32 @@ function clearCreateDraft() {
   window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
 }
 
+function readComboFlowCache(postId: number) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getComboFlowCacheKey(postId));
+
+    if (!raw) {
+      return null;
+    }
+
+    return JSON.parse(raw) as ComboFlowPost;
+  } catch {
+    return null;
+  }
+}
+
+function writeComboFlowCache(post: ComboFlowPost) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(getComboFlowCacheKey(post.id), JSON.stringify(post));
+}
+
 export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const supabase = getSupabaseBrowserClient();
   const router = useRouter();
@@ -141,9 +171,45 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     let mounted = true;
 
     async function loadEditor() {
-      const {
-        data: { session: activeSession },
-      } = await client.auth.getSession();
+      if (props.mode === "edit" && editPostId) {
+        const cachedPost = readComboFlowCache(editPostId);
+
+        if (cachedPost) {
+          setPost(cachedPost);
+          setCharacterName(
+            COMBO_FLOW_CHARACTERS.includes(cachedPost.character_name as ComboFlowCharacter)
+              ? (cachedPost.character_name as ComboFlowCharacter)
+              : "",
+          );
+          setSummary(cachedPost.summary ?? "");
+          setNodes(
+            Array.isArray(cachedPost.flow_nodes) && cachedPost.flow_nodes.length > 0
+              ? cachedPost.flow_nodes
+              : createInitialNodes(),
+          );
+          setEdges(Array.isArray(cachedPost.flow_edges) ? cachedPost.flow_edges : []);
+          setMessage("保存済みデータを先に表示しています。");
+        }
+      }
+
+      const sessionPromise = client.auth.getSession();
+      const postPromise =
+        props.mode === "edit"
+          ? client
+              .from("combo_flow_posts")
+              .select(
+                "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
+              )
+              .eq("id", editPostId ?? 0)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null });
+
+      const [
+        {
+          data: { session: activeSession },
+        },
+        postResult,
+      ] = await Promise.all([sessionPromise, postPromise]);
 
       if (!mounted) {
         return;
@@ -178,32 +244,21 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         return;
       }
 
-      const { data, error } = await client
-        .from("combo_flow_posts")
-        .select(
-          "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
-        )
-        .eq("id", editPostId ?? 0)
-        .maybeSingle();
-
-      if (!mounted) {
+      if (postResult.error) {
+        setMessage(`読み込みに失敗しました: ${postResult.error.message}`);
         return;
       }
 
-      if (error) {
-        setMessage(`読み込みに失敗しました: ${error.message}`);
-        return;
-      }
-
-      if (!data) {
+      if (!postResult.data) {
         setMessage("コンボフローが見つかりません。");
         return;
       }
 
-      const nextPost = data as ComboFlowPost;
+      const nextPost = postResult.data as ComboFlowPost;
       const ownsPost = activeSession?.user?.id === nextPost.user_id;
 
       setPost(nextPost);
+      writeComboFlowCache(nextPost);
       setCharacterName(
         COMBO_FLOW_CHARACTERS.includes(nextPost.character_name as ComboFlowCharacter)
           ? (nextPost.character_name as ComboFlowCharacter)
@@ -213,11 +268,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       setNodes(Array.isArray(nextPost.flow_nodes) ? nextPost.flow_nodes : createInitialNodes());
       setEdges(Array.isArray(nextPost.flow_edges) ? nextPost.flow_edges : []);
       setIsOwner(Boolean(ownsPost));
-      setMessage(
-        ownsPost
-          ? "自分のコンボフローを編集中です。"
-          : "公開中のコンボフローを表示しています。",
-      );
+      setMessage(ownsPost ? "自分のコンボフローを編集中です。" : "公開中のコンボフローを表示しています。");
     }
 
     loadEditor().catch((error: unknown) => {
@@ -362,6 +413,15 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         const authorName =
           displayName || (session.user.email ?? "").split("@")[0] || "プレイヤー";
         const resolvedTitle = buildComboFlowTitle(nextNodes);
+        const payload = {
+          character_name: characterName,
+          title: resolvedTitle,
+          summary: summary.trim(),
+          flow_nodes: nextNodes,
+          flow_edges: nextEdges,
+        };
+
+        setMessage("保存しています...");
 
         if (props.mode === "create") {
           const { data, error } = await supabase
@@ -369,48 +429,61 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             .insert({
               user_id: session.user.id,
               author_name: authorName,
-              character_name: characterName,
-              title: resolvedTitle,
-              summary: summary.trim(),
-              flow_nodes: nextNodes,
-              flow_edges: nextEdges,
+              ...payload,
             })
-            .select(
-              "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
-            )
+            .select("id, created_at, updated_at")
             .single();
 
           if (error) {
             throw error;
           }
 
+          const createdPost: ComboFlowPost = {
+            id: data.id,
+            user_id: session.user.id,
+            author_name: authorName,
+            character_name: characterName,
+            title: resolvedTitle,
+            summary: payload.summary,
+            flow_nodes: nextNodes,
+            flow_edges: nextEdges,
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+          };
+
+          writeComboFlowCache(createdPost);
           clearCreateDraft();
-          router.push(getComboFlowDetailHref((data as ComboFlowPost).id));
-          router.refresh();
+          router.push(getComboFlowDetailHref(createdPost.id));
           return;
         }
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("combo_flow_posts")
           .update({
-            character_name: characterName,
-            title: resolvedTitle,
-            summary: summary.trim(),
-            flow_nodes: nextNodes,
-            flow_edges: nextEdges,
+            ...payload,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", editPostId ?? 0)
-          .select(
-            "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
-          )
-          .single();
+          .eq("id", editPostId ?? 0);
 
         if (error) {
           throw error;
         }
 
-        setPost(data as ComboFlowPost);
+        const updatedPost: ComboFlowPost = {
+          id: editPostId ?? 0,
+          user_id: post?.user_id ?? session.user.id,
+          author_name: post?.author_name ?? authorName,
+          character_name: characterName,
+          title: resolvedTitle,
+          summary: payload.summary,
+          flow_nodes: nextNodes,
+          flow_edges: nextEdges,
+          created_at: post?.created_at ?? new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        setPost(updatedPost);
+        writeComboFlowCache(updatedPost);
         setMessage("コンボフローを保存しました。");
       } catch (error: unknown) {
         setMessage(`保存に失敗しました: ${getMessageFromError(error)}`);
