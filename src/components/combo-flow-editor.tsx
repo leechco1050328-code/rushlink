@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { CharacterChip } from "@/components/character-chip";
@@ -31,6 +32,15 @@ type ComboFlowEditorProps =
       postId: number;
     };
 
+type ComboFlowDraft = {
+  characterName: ComboFlowCharacter | "";
+  summary: string;
+  nodes: ComboFlowNode[];
+  edges: ComboFlowEdge[];
+};
+
+const CREATE_DRAFT_STORAGE_KEY = "rushlink-combo-flow-create-draft";
+
 function getMessageFromError(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -58,9 +68,58 @@ function createInitialNodes() {
   return [createEmptyComboNode(0), createEmptyComboNode(1)];
 }
 
+function readCreateDraft(): ComboFlowDraft | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<ComboFlowDraft>;
+
+    return {
+      characterName:
+        parsed.characterName && COMBO_FLOW_CHARACTERS.includes(parsed.characterName)
+          ? parsed.characterName
+          : "",
+      summary: typeof parsed.summary === "string" ? parsed.summary : "",
+      nodes:
+        Array.isArray(parsed.nodes) && parsed.nodes.length > 0
+          ? (parsed.nodes as ComboFlowNode[])
+          : createInitialNodes(),
+      edges: Array.isArray(parsed.edges) ? (parsed.edges as ComboFlowEdge[]) : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeCreateDraft(draft: ComboFlowDraft) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(CREATE_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+}
+
+function clearCreateDraft() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
+}
+
 export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const supabase = getSupabaseBrowserClient();
+  const router = useRouter();
   const bottomAdSlot = getAdSenseMidSlot();
+  const editPostId = props.mode === "edit" ? props.postId : null;
   const [session, setSession] = useState<Session | null>(null);
   const [post, setPost] = useState<ComboFlowPost | null>(null);
   const [isOwner, setIsOwner] = useState(props.mode === "create");
@@ -69,11 +128,8 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const [nodes, setNodes] = useState<ComboFlowNode[]>(createInitialNodes());
   const [edges, setEdges] = useState<ComboFlowEdge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [, setMessage] = useState(
-    props.mode === "create"
-      ? "新しいコンボフローを作成できます。"
-      : "コンボフローを読み込んでいます。",
-  );
+  const [message, setMessage] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -97,11 +153,28 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
       if (props.mode === "create") {
         setIsOwner(Boolean(activeSession?.user));
-        setMessage(
-          activeSession?.user
-            ? "新しいコンボフローを編集できます。"
-            : "コンボフローを作るにはログインしてください。",
-        );
+
+        const draft = readCreateDraft();
+
+        if (draft) {
+          setCharacterName(draft.characterName);
+          setSummary(draft.summary);
+          setNodes(draft.nodes);
+          setEdges(draft.edges);
+          setMessage(
+            activeSession?.user
+              ? "前回の下書きを復元しました。保存すると公開されます。"
+              : "前回の下書きを復元しました。公開保存するにはログインしてください。",
+          );
+        } else {
+          setMessage(
+            activeSession?.user
+              ? "コンボフローを作成して保存できます。"
+              : "まずは下書きを作れます。公開保存するにはログインしてください。",
+          );
+        }
+
+        setDraftReady(true);
         return;
       }
 
@@ -110,7 +183,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         .select(
           "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
         )
-        .eq("id", props.postId)
+        .eq("id", editPostId ?? 0)
         .maybeSingle();
 
       if (!mounted) {
@@ -128,6 +201,8 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       }
 
       const nextPost = data as ComboFlowPost;
+      const ownsPost = activeSession?.user?.id === nextPost.user_id;
+
       setPost(nextPost);
       setCharacterName(
         COMBO_FLOW_CHARACTERS.includes(nextPost.character_name as ComboFlowCharacter)
@@ -137,10 +212,10 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       setSummary(nextPost.summary ?? "");
       setNodes(Array.isArray(nextPost.flow_nodes) ? nextPost.flow_nodes : createInitialNodes());
       setEdges(Array.isArray(nextPost.flow_edges) ? nextPost.flow_edges : []);
-      setIsOwner(activeSession?.user?.id === nextPost.user_id);
+      setIsOwner(Boolean(ownsPost));
       setMessage(
-        activeSession?.user?.id === nextPost.user_id
-          ? "ノードをホバーして内容を編集できます。"
+        ownsPost
+          ? "自分のコンボフローを編集中です。"
           : "公開中のコンボフローを表示しています。",
       );
     }
@@ -149,13 +224,27 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       if (!mounted) {
         return;
       }
+
       setMessage(`読み込みに失敗しました: ${getMessageFromError(error)}`);
     });
 
     return () => {
       mounted = false;
     };
-  }, [props, supabase]);
+  }, [editPostId, props.mode, supabase]);
+
+  useEffect(() => {
+    if (props.mode !== "create" || !draftReady) {
+      return;
+    }
+
+    writeCreateDraft({
+      characterName,
+      summary,
+      nodes,
+      edges,
+    });
+  }, [characterName, draftReady, edges, nodes, props.mode, summary]);
 
   function updateNode(nodeId: string, patch: Partial<ComboFlowNode>) {
     setNodes((current) =>
@@ -212,7 +301,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     );
 
     if (exists) {
-      setMessage("同じ接続がすでにあります。");
+      setMessage("同じ接続はすでに追加されています。");
       return;
     }
 
@@ -253,6 +342,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     }
 
     const nextNodes = normalizeNodes(nodes);
+
     if (nextNodes.length < 2) {
       setMessage("最低2つのノードを入れてください。");
       return;
@@ -260,15 +350,17 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
     const nodeIds = new Set(nextNodes.map((node) => node.id));
     const nextEdges = normalizeEdges(edges, nodeIds);
+
     if (nextEdges.length === 0) {
-      setMessage("接続を1本以上作ってください。");
+      setMessage("接続を1本以上つないでください。");
       return;
     }
 
     startTransition(async () => {
       try {
         const displayName = String(session.user.user_metadata.display_name ?? "").trim();
-        const authorName = displayName || (session.user.email ?? "").split("@")[0] || "プレイヤー";
+        const authorName =
+          displayName || (session.user.email ?? "").split("@")[0] || "プレイヤー";
         const resolvedTitle = buildComboFlowTitle(nextNodes);
 
         if (props.mode === "create") {
@@ -292,7 +384,9 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             throw error;
           }
 
-          window.location.href = getComboFlowDetailHref((data as ComboFlowPost).id);
+          clearCreateDraft();
+          router.push(getComboFlowDetailHref((data as ComboFlowPost).id));
+          router.refresh();
           return;
         }
 
@@ -306,7 +400,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             flow_edges: nextEdges,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", props.postId)
+          .eq("id", editPostId ?? 0)
           .select(
             "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
           )
@@ -317,7 +411,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         }
 
         setPost(data as ComboFlowPost);
-        setMessage("コンボフローを更新しました。");
+        setMessage("コンボフローを保存しました。");
       } catch (error: unknown) {
         setMessage(`保存に失敗しました: ${getMessageFromError(error)}`);
       }
@@ -337,6 +431,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             >
               コンボフロー管理へ戻る
             </Link>
+
             {session?.user ? (
               <div className="max-w-[18rem]">
                 <label className="sr-only" htmlFor="combo-flow-character">
@@ -371,18 +466,24 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
                 disabled={isPending}
                 className="primary-action min-w-[11rem] disabled:opacity-60"
               >
-                {isPending ? "保存中..." : props.mode === "create" ? "作成する" : "更新する"}
+                {isPending ? "保存中..." : props.mode === "create" ? "保存する" : "更新する"}
               </button>
             ) : null}
             {post ? <SharePostActions title={post.title} path={getComboFlowDetailHref(post.id)} /> : null}
           </div>
         </header>
 
+        {message ? (
+          <section className="panel rounded-[22px] px-5 py-3 text-sm leading-7 text-[var(--muted)]">
+            {message}
+          </section>
+        ) : null}
+
         {!session?.user ? (
           <section className="panel rounded-[26px] px-5 py-5">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="text-sm leading-7 text-[var(--muted)]">
-                コンボフローを作成・編集するにはログインしてください。
+                コンボフローの保存と編集にはログインが必要です。今の内容はこのブラウザに下書き保存されます。
               </p>
               <Link href="/auth?mode=sign-in" className="primary-action">
                 ログインする
