@@ -48,7 +48,7 @@ export const COMBO_FLOW_EDGE_HINTS = [
   "DR",
   "キャンセル",
   "リンク",
-  "端限定",
+  "歩き",
 ] as const;
 
 export const COMBO_FLOW_MOVE_GROUPS = [
@@ -94,13 +94,15 @@ export const COMBO_FLOW_MOVE_GROUPS = [
       "↓↙←+弱K",
       "↓↙←+中K",
       "↓↙←+大K",
-      "→↓↘+弱P",
-      "→↓↘+中P",
-      "→↓↘+大P",
+      "←ため→+弱P",
+      "←ため→+中P",
+      "←ため→+大P",
       "↓ため↑+K",
-      "←ため→+P",
+      "→↓↘+P",
       "1回転+大P",
       "1回転+大K",
+      "P派生",
+      "K派生",
     ],
   },
   {
@@ -109,7 +111,17 @@ export const COMBO_FLOW_MOVE_GROUPS = [
   },
   {
     label: "その他",
-    options: ["ジャンプ", "前ステップ", "後ろステップ", "ドライブラッシュ", "OD技"],
+    options: [
+      "ジャンプ",
+      "前ステップ",
+      "後ろステップ",
+      "ドライブラッシュ",
+      "OD技",
+      "↓↓",
+      "↑↑",
+      "→→",
+      "←←",
+    ],
   },
 ] as const;
 
