@@ -1,9 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { BrandPageHeader } from "@/components/brand-page-header";
 import { CharacterChip } from "@/components/character-chip";
 import { ComboFlowCanvas } from "@/components/combo-flow-canvas";
 import { SharePostActions } from "@/components/share-post-actions";
@@ -96,10 +96,9 @@ export function ComboFlowViewer({ postId }: ComboFlowViewerProps) {
         return;
       }
 
-      const nextPost = postResult.data as ComboFlowPost;
-      setPost(nextPost);
-      setMessage("公開中のコンボフローを表示しています。");
+      setPost(postResult.data as ComboFlowPost);
       setIsLoading(false);
+      setMessage("");
     }
 
     loadPost().catch((error: unknown) => {
@@ -123,30 +122,35 @@ export function ComboFlowViewer({ postId }: ComboFlowViewerProps) {
       <div className="grid-noise absolute inset-0 opacity-40" />
 
       <section className="relative flex min-h-screen flex-col gap-4 px-2 py-3 md:px-3 md:py-4">
-        <BrandPageHeader
-          backHref="/combo-flow"
-          backLabel="コンボフロー管理へ戻る"
-          kicker={post ? "Combo Flow" : undefined}
-          title={post?.title ?? "コンボフロー"}
-          description={
-            post?.summary?.trim()
-              ? post.summary
-              : "公開中のコンボフローを閲覧できます。"
-          }
-          actions={
-            isOwner && post ? (
-              <Link href={getComboFlowEditHref(post.id)} className="primary-action">
-                編集する
-              </Link>
-            ) : undefined
-          }
-        />
+        <header className="panel flex flex-wrap items-start justify-between gap-4 rounded-[30px] px-6 py-6">
+          <div className="space-y-4">
+            <Link
+              href="/combo-flow"
+              className="text-sm text-[var(--accent-soft)] underline underline-offset-4"
+            >
+              コンボフロー管理へ戻る
+            </Link>
 
-        {message ? (
-          <section className="panel rounded-[22px] px-5 py-3 text-sm leading-7 text-[var(--muted)]">
-            {message}
-          </section>
-        ) : null}
+            <div className="flex flex-wrap items-center gap-3">
+              <Image
+                src="/logo-white.svg"
+                alt="Rush Link"
+                width={400}
+                height={120}
+                className="h-9 w-auto md:h-10"
+              />
+              <span className="pill-button rounded-full border border-[var(--secondary)]/35 bg-[var(--secondary)]/12 px-3 py-1 text-xs text-[var(--secondary)]">
+                Beta
+              </span>
+            </div>
+          </div>
+
+          {isOwner && post ? (
+            <Link href={getComboFlowEditHref(post.id)} className="primary-action">
+              編集する
+            </Link>
+          ) : null}
+        </header>
 
         {isLoading || !post ? (
           <section className="panel rounded-[26px] px-5 py-5">
@@ -174,12 +178,6 @@ export function ComboFlowViewer({ postId }: ComboFlowViewerProps) {
                     更新: {formatPostedAt(post.updated_at)}
                   </span>
                 ) : null}
-                <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-[var(--muted)]">
-                  ノード {post.flow_nodes.length}
-                </span>
-                <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-[var(--muted)]">
-                  ルート {post.flow_edges.length}
-                </span>
               </div>
 
               <div className="mt-5">
