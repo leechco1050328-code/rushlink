@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { CharacterChip } from "@/components/character-chip";
 import { ComboFlowCanvas } from "@/components/combo-flow-canvas";
-import { SharePostActions } from "@/components/share-post-actions";
 import {
   getComboFlowEditHref,
   type ComboFlowCharacter,
@@ -178,10 +177,6 @@ export function ComboFlowViewer({ postId }: ComboFlowViewerProps) {
                     更新: {formatPostedAt(post.updated_at)}
                   </span>
                 ) : null}
-              </div>
-
-              <div className="mt-5">
-                <SharePostActions title={post.title} path={`/combo-flow/${post.id}`} />
               </div>
             </section>
 
