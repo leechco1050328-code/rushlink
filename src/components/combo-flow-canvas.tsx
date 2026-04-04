@@ -20,14 +20,18 @@ const MIN_CANVAS_HEIGHT = 1200;
 const HANDLE_SIZE = 20;
 const EDGE_LABEL_WIDTH = 124;
 const EDGE_LABEL_HEIGHT = 28;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 1.75;
+const ZOOM_STEP = 0.125;
 
 type ComboFlowCanvasProps = {
   nodes: ComboFlowNode[];
   edges: ComboFlowEdge[];
-  selectedNodeId?: string | null;
+  selectedNodeIds?: string[];
   interactive?: boolean;
-  onSelectNode?: (nodeId: string | null) => void;
+  onChangeSelection?: (nodeIds: string[]) => void;
   onMoveNode?: (nodeId: string, nextX: number, nextY: number) => void;
+  onMoveNodes?: (updates: Array<{ id: string; nextX: number; nextY: number }>) => void;
   onCreateEdge?: (
     fromNodeId: string,
     toNodeId: string,
@@ -42,11 +46,11 @@ type ComboFlowCanvasProps = {
 };
 
 type DragNodeState = {
-  id: string;
+  primaryId: string;
+  ids: string[];
   startClientX: number;
   startClientY: number;
-  startNodeX: number;
-  startNodeY: number;
+  startNodePositions: Record<string, { x: number; y: number }>;
   moved: boolean;
 };
 
@@ -83,15 +87,20 @@ function clampPosition(value: number, max: number) {
   return Math.max(0, Math.min(value, max));
 }
 
-function getCanvasPoint(canvas: HTMLDivElement | null, clientX: number, clientY: number) {
+function getCanvasPoint(
+  canvas: HTMLDivElement | null,
+  clientX: number,
+  clientY: number,
+  zoom: number,
+) {
   if (!canvas) {
     return { x: 0, y: 0 };
   }
 
   const rect = canvas.getBoundingClientRect();
   return {
-    x: clientX - rect.left + canvas.scrollLeft,
-    y: clientY - rect.top + canvas.scrollTop,
+    x: (clientX - rect.left + canvas.scrollLeft) / zoom,
+    y: (clientY - rect.top + canvas.scrollTop) / zoom,
   };
 }
 
@@ -222,10 +231,11 @@ function getMoveOptions(move: string) {
 export function ComboFlowCanvas({
   nodes,
   edges,
-  selectedNodeId = null,
+  selectedNodeIds = [],
   interactive = false,
-  onSelectNode,
+  onChangeSelection,
   onMoveNode,
+  onMoveNodes,
   onCreateEdge,
   onUpdateNode,
   onToggleNodeTag,
@@ -244,6 +254,8 @@ export function ComboFlowCanvas({
   const [activeNodeEditorId, setActiveNodeEditorId] = useState<string | null>(null);
   const [edgeDrag, setEdgeDrag] = useState<DragEdgeState | null>(null);
   const [nodeHeights, setNodeHeights] = useState<Record<string, number>>({});
+  const [zoom, setZoom] = useState(1);
+  const selectedNodeIdSet = useMemo(() => new Set(selectedNodeIds), [selectedNodeIds]);
 
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") {
@@ -350,9 +362,9 @@ export function ComboFlowCanvas({
     }
 
     function handlePointerMove(event: PointerEvent) {
-      if (nodeDragRef.current && onMoveNode) {
-        const deltaX = event.clientX - nodeDragRef.current.startClientX;
-        const deltaY = event.clientY - nodeDragRef.current.startClientY;
+      if (nodeDragRef.current && (onMoveNodes || onMoveNode)) {
+        const deltaX = (event.clientX - nodeDragRef.current.startClientX) / zoom;
+        const deltaY = (event.clientY - nodeDragRef.current.startClientY) / zoom;
 
         if (!nodeDragRef.current.moved) {
           if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) {
@@ -362,16 +374,22 @@ export function ComboFlowCanvas({
           nodeDragRef.current.moved = true;
         }
 
-        const nextX = clampPosition(
-          nodeDragRef.current.startNodeX + deltaX,
-          canvasSize.width - NODE_WIDTH,
-        );
-        const nextY = clampPosition(
-          nodeDragRef.current.startNodeY + deltaY,
-          canvasSize.height - (nodeHeights[nodeDragRef.current.id] ?? NODE_MIN_HEIGHT),
-        );
+        const updates = nodeDragRef.current.ids.map((id) => {
+          const startPosition = nodeDragRef.current?.startNodePositions[id] ?? { x: 0, y: 0 };
+          const nodeHeight = nodeHeights[id] ?? NODE_MIN_HEIGHT;
 
-        onMoveNode(nodeDragRef.current.id, nextX, nextY);
+          return {
+            id,
+            nextX: clampPosition(startPosition.x + deltaX, canvasSize.width - NODE_WIDTH),
+            nextY: clampPosition(startPosition.y + deltaY, canvasSize.height - nodeHeight),
+          };
+        });
+
+        if (onMoveNodes) {
+          onMoveNodes(updates);
+        } else {
+          updates.forEach(({ id, nextX, nextY }) => onMoveNode?.(id, nextX, nextY));
+        }
         return;
       }
 
@@ -385,7 +403,7 @@ export function ComboFlowCanvas({
       }
 
       if (edgeDrag) {
-        const point = getCanvasPoint(canvasRef.current, event.clientX, event.clientY);
+        const point = getCanvasPoint(canvasRef.current, event.clientX, event.clientY, zoom);
         setEdgeDrag((current) =>
           current
             ? {
@@ -400,7 +418,7 @@ export function ComboFlowCanvas({
 
     function handlePointerUp() {
       if (nodeDragRef.current?.moved) {
-        suppressClickNodeIdRef.current = nodeDragRef.current.id;
+        suppressClickNodeIdRef.current = nodeDragRef.current.primaryId;
       }
 
       nodeDragRef.current = null;
@@ -415,7 +433,24 @@ export function ComboFlowCanvas({
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [canvasSize.height, canvasSize.width, edgeDrag, interactive, nodeHeights, onMoveNode]);
+  }, [canvasSize.height, canvasSize.width, edgeDrag, interactive, nodeHeights, onMoveNode, onMoveNodes, zoom]);
+
+  function updateZoom(nextZoom: number) {
+    setZoom(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(nextZoom.toFixed(3)))));
+  }
+
+  function replaceSelection(nodeId: string | null) {
+    onChangeSelection?.(nodeId ? [nodeId] : []);
+  }
+
+  function toggleSelection(nodeId: string) {
+    if (selectedNodeIdSet.has(nodeId)) {
+      onChangeSelection?.(selectedNodeIds.filter((id) => id !== nodeId));
+      return;
+    }
+
+    onChangeSelection?.([...selectedNodeIds, nodeId]);
+  }
 
   return (
     <div className="rounded-[26px] border border-white/10 bg-black/20">
@@ -436,18 +471,54 @@ export function ComboFlowCanvas({
           };
         }}
       >
+        <div className="pointer-events-none absolute right-5 top-5 z-40 flex items-center gap-2">
+          <div className="pointer-events-auto flex items-center rounded-full border border-white/10 bg-[#09101d]/88 p-1 shadow-[0_12px_24px_rgba(0,0,0,0.28)] backdrop-blur">
+            <button
+              type="button"
+              onClick={() => updateZoom(zoom - ZOOM_STEP)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-white/80 transition hover:bg-white/8 hover:text-white"
+              aria-label="縮小"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              onClick={() => updateZoom(1)}
+              className="min-w-[4.5rem] rounded-full px-3 py-2 text-xs font-semibold tracking-[0.14em] text-[var(--accent-soft)] transition hover:bg-white/8"
+              aria-label="倍率をリセット"
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+            <button
+              type="button"
+              onClick={() => updateZoom(zoom + ZOOM_STEP)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-white/80 transition hover:bg-white/8 hover:text-white"
+              aria-label="拡大"
+            >
+              +
+            </button>
+          </div>
+        </div>
         <div
           className="relative"
           style={{
-            width: `${canvasSize.width}px`,
-            height: `${canvasSize.height}px`,
+            width: `${canvasSize.width * zoom}px`,
+            height: `${canvasSize.height * zoom}px`,
           }}
           onClick={() => {
-            onSelectNode?.(null);
+            replaceSelection(null);
             setActiveEdgeId(null);
             setActiveNodeEditorId(null);
           }}
         >
+          <div
+            className="absolute left-0 top-0 origin-top-left"
+            style={{
+              width: `${canvasSize.width}px`,
+              height: `${canvasSize.height}px`,
+              transform: `scale(${zoom})`,
+            }}
+          >
           <div
             className="absolute inset-0 opacity-15"
             style={{
@@ -615,7 +686,7 @@ export function ComboFlowCanvas({
             const showHandles =
               interactive &&
               (hoveredNodeId === node.id ||
-                selectedNodeId === node.id ||
+                selectedNodeIdSet.has(node.id) ||
                 (edgeDrag !== null && edgeDrag.sourceId !== node.id));
             const showNodeToolbar =
               interactive && (hoveredNodeId === node.id || activeNodeEditorId === node.id);
@@ -643,7 +714,7 @@ export function ComboFlowCanvas({
                   }}
                   data-node-id={node.id}
                   className={`relative overflow-hidden rounded-[20px] border shadow-[0_16px_34px_rgba(0,0,0,0.28)] transition ${
-                    selectedNodeId === node.id
+                    selectedNodeIdSet.has(node.id)
                       ? "border-[var(--secondary)] bg-[var(--secondary)]/14"
                       : isEdgeTarget
                         ? "border-[var(--accent-soft)] bg-white/5"
@@ -662,7 +733,11 @@ export function ComboFlowCanvas({
                         return;
                       }
 
-                      onSelectNode?.(node.id);
+                      if (event.ctrlKey || event.metaKey) {
+                        toggleSelection(node.id);
+                      } else {
+                        replaceSelection(node.id);
+                      }
                       setActiveEdgeId(null);
                     }}
                     onPointerUp={(event) => {
@@ -671,7 +746,7 @@ export function ComboFlowCanvas({
                       }
 
                       event.stopPropagation();
-                      const point = getCanvasPoint(canvasRef.current, event.clientX, event.clientY);
+                      const point = getCanvasPoint(canvasRef.current, event.clientX, event.clientY, zoom);
                       const targetSide = getNearestHandleSide(
                         node,
                         point.x,
@@ -686,13 +761,27 @@ export function ComboFlowCanvas({
                         return;
                       }
 
+                      if (event.ctrlKey || event.metaKey) {
+                        return;
+                      }
+
                       event.preventDefault();
+                      const dragIds = selectedNodeIdSet.has(node.id) ? selectedNodeIds : [node.id];
+
+                      if (!selectedNodeIdSet.has(node.id)) {
+                        replaceSelection(node.id);
+                      }
+
                       nodeDragRef.current = {
-                        id: node.id,
+                        primaryId: node.id,
+                        ids: dragIds,
                         startClientX: event.clientX,
                         startClientY: event.clientY,
-                        startNodeX: node.x,
-                        startNodeY: node.y,
+                        startNodePositions: Object.fromEntries(
+                          nodes
+                            .filter((item) => dragIds.includes(item.id))
+                            .map((item) => [item.id, { x: item.x, y: item.y }]),
+                        ),
                         moved: false,
                       };
                     }}
@@ -727,7 +816,7 @@ export function ComboFlowCanvas({
                         onClick={(event) => {
                           event.stopPropagation();
                           setActiveNodeEditorId((current) => (current === node.id ? null : node.id));
-                          onSelectNode?.(node.id);
+                          replaceSelection(node.id);
                         }}
                         className="rounded-full border border-white/10 bg-[#0a1324]/90 px-2.5 py-1 text-[10px] font-semibold text-[var(--accent-soft)]"
                       >
@@ -740,7 +829,7 @@ export function ComboFlowCanvas({
                             event.stopPropagation();
                             onDeleteNode?.(node.id);
                             setActiveNodeEditorId((current) => (current === node.id ? null : current));
-                            onSelectNode?.(null);
+                            replaceSelection(null);
                           }}
                           className="rounded-full border border-white/10 bg-[#0a1324]/90 px-2.5 py-1 text-[10px] font-semibold text-white/80"
                         >
@@ -776,6 +865,7 @@ export function ComboFlowCanvas({
                                 canvasRef.current,
                                 event.clientX,
                                 event.clientY,
+                                zoom,
                               );
                               setEdgeDrag({
                                 sourceId: node.id,
@@ -817,7 +907,7 @@ export function ComboFlowCanvas({
                           type="button"
                           onClick={() => {
                             onDeleteNode?.(node.id);
-                            onSelectNode?.(null);
+                            replaceSelection(null);
                           }}
                           className="secondary-action min-h-0 px-3 py-1.5 text-[11px]"
                         >
@@ -898,6 +988,7 @@ export function ComboFlowCanvas({
               <option key={hint} value={hint} />
             ))}
           </datalist>
+          </div>
         </div>
       </div>
     </div>

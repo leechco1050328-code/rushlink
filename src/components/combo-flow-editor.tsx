@@ -170,7 +170,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const [summary, setSummary] = useState("");
   const [nodes, setNodes] = useState<ComboFlowNode[]>(createInitialNodes());
   const [edges, setEdges] = useState<ComboFlowEdge[]>([]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -322,6 +322,16 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     );
   }
 
+  function updateNodesPosition(updates: Array<{ id: string; nextX: number; nextY: number }>) {
+    const updateMap = new Map(updates.map((update) => [update.id, update]));
+    setNodes((current) =>
+      current.map((node) => {
+        const next = updateMap.get(node.id);
+        return next ? { ...node, x: next.nextX, y: next.nextY } : node;
+      }),
+    );
+  }
+
   function toggleNodeTag(nodeId: string, tag: ComboFlowNodeTag) {
     setNodes((current) =>
       current.map((node) =>
@@ -342,13 +352,13 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     setEdges((current) =>
       current.filter((edge) => edge.from !== nodeId && edge.to !== nodeId),
     );
-    setSelectedNodeId((current) => (current === nodeId ? null : current));
+    setSelectedNodeIds((current) => current.filter((id) => id !== nodeId));
   }
 
   function addNode() {
     const nextNode = createEmptyComboNode(nodes.length);
     setNodes((current) => [...current, nextNode]);
-    setSelectedNodeId(nextNode.id);
+    setSelectedNodeIds([nextNode.id]);
     setMessage("ノードを追加しました。");
   }
 
@@ -398,6 +408,62 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
   function removeEdge(edgeId: string) {
     setEdges((current) => current.filter((edge) => edge.id !== edgeId));
+  }
+
+  function alignSelectedNodes(mode: "top" | "left" | "horizontal" | "vertical") {
+    const selectedNodes = nodes.filter((node) => selectedNodeIds.includes(node.id));
+
+    if (selectedNodes.length < 2) {
+      setMessage("整列するには2つ以上のノードを選択してください。");
+      return;
+    }
+
+    const updates = new Map<string, { x: number; y: number }>();
+
+    if (mode === "top") {
+      const top = Math.min(...selectedNodes.map((node) => node.y));
+      selectedNodes.forEach((node) => updates.set(node.id, { x: node.x, y: top }));
+      setMessage("選択ノードを上揃えにしました。");
+    } else if (mode === "left") {
+      const left = Math.min(...selectedNodes.map((node) => node.x));
+      selectedNodes.forEach((node) => updates.set(node.id, { x: left, y: node.y }));
+      setMessage("選択ノードを左揃えにしました。");
+    } else if (mode === "horizontal") {
+      if (selectedNodes.length < 3) {
+        setMessage("横等間隔は3つ以上のノードを選択してください。");
+        return;
+      }
+
+      const sortedNodes = [...selectedNodes].sort((a, b) => a.x - b.x);
+      const firstX = sortedNodes[0].x;
+      const lastX = sortedNodes[sortedNodes.length - 1].x;
+      const gap = (lastX - firstX) / (sortedNodes.length - 1);
+      sortedNodes.forEach((node, index) =>
+        updates.set(node.id, { x: Math.round(firstX + gap * index), y: node.y }),
+      );
+      setMessage("選択ノードを横等間隔にしました。");
+    } else {
+      if (selectedNodes.length < 3) {
+        setMessage("縦等間隔は3つ以上のノードを選択してください。");
+        return;
+      }
+
+      const sortedNodes = [...selectedNodes].sort((a, b) => a.y - b.y);
+      const firstY = sortedNodes[0].y;
+      const lastY = sortedNodes[sortedNodes.length - 1].y;
+      const gap = (lastY - firstY) / (sortedNodes.length - 1);
+      sortedNodes.forEach((node, index) =>
+        updates.set(node.id, { x: node.x, y: Math.round(firstY + gap * index) }),
+      );
+      setMessage("選択ノードを縦等間隔にしました。");
+    }
+
+    setNodes((current) =>
+      current.map((node) => {
+        const next = updates.get(node.id);
+        return next ? { ...node, x: next.x, y: next.y } : node;
+      }),
+    );
   }
 
   function handleSave() {
@@ -566,7 +632,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
         <section className="relative rounded-[26px] border border-white/10 bg-black/15 p-1">
           {session?.user && isOwner ? (
-            <div className="pointer-events-none absolute left-5 top-5 z-20">
+            <div className="pointer-events-none absolute left-5 top-5 z-20 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={addNode}
@@ -574,16 +640,48 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
               >
                 ノードを追加
               </button>
+              {selectedNodeIds.length >= 2 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => alignSelectedNodes("vertical")}
+                    className="secondary-action pointer-events-auto min-h-0 px-4 py-3 text-sm"
+                  >
+                    縦等間隔
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => alignSelectedNodes("horizontal")}
+                    className="secondary-action pointer-events-auto min-h-0 px-4 py-3 text-sm"
+                  >
+                    横等間隔
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => alignSelectedNodes("top")}
+                    className="secondary-action pointer-events-auto min-h-0 px-4 py-3 text-sm"
+                  >
+                    上揃え
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => alignSelectedNodes("left")}
+                    className="secondary-action pointer-events-auto min-h-0 px-4 py-3 text-sm"
+                  >
+                    左揃え
+                  </button>
+                </>
+              ) : null}
             </div>
           ) : null}
 
           <ComboFlowCanvas
             nodes={nodes}
             edges={edges}
-            selectedNodeId={selectedNodeId}
+            selectedNodeIds={selectedNodeIds}
             interactive={Boolean(session?.user && isOwner)}
-            onSelectNode={setSelectedNodeId}
-            onMoveNode={(nodeId, nextX, nextY) => updateNode(nodeId, { x: nextX, y: nextY })}
+            onChangeSelection={setSelectedNodeIds}
+            onMoveNodes={updateNodesPosition}
             onCreateEdge={addEdge}
             onUpdateNode={updateNode}
             onToggleNodeTag={toggleNodeTag}
