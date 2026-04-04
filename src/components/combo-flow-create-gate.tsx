@@ -3,11 +3,18 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { COMBO_FLOW_CHARACTERS, type ComboFlowCharacter } from "@/lib/combo-flow";
+import {
+  COMBO_FLOW_CHARACTERS,
+  COMBO_FLOW_CONTROL_SCHEMES,
+  getComboFlowControlSchemeLabel,
+  type ComboFlowCharacter,
+  type ComboFlowControlScheme,
+} from "@/lib/combo-flow";
 
 export function ComboFlowCreateGate() {
   const router = useRouter();
   const [characterName, setCharacterName] = useState<ComboFlowCharacter | "">("");
+  const [controlScheme, setControlScheme] = useState<ComboFlowControlScheme>("classic");
 
   return (
     <main className="relative overflow-hidden">
@@ -25,7 +32,7 @@ export function ComboFlowCreateGate() {
           <div className="mt-5 space-y-3">
             <h1 className="text-3xl font-semibold text-white">新規コンボフロー作成</h1>
             <p className="text-sm leading-7 text-[var(--muted)]">
-              先にキャラクターを選んでから、フロー作成画面へ進みます。
+              先にキャラクターと操作タイプを選んでから、フロー編集画面へ進みます。
             </p>
           </div>
         </div>
@@ -33,10 +40,7 @@ export function ComboFlowCreateGate() {
         <section className="panel rounded-[28px] px-6 py-6">
           <div className="space-y-5">
             <div className="space-y-2">
-              <label
-                htmlFor="combo-flow-create-character"
-                className="text-sm font-medium text-white"
-              >
+              <label htmlFor="combo-flow-create-character" className="text-sm font-medium text-white">
                 キャラクター
               </label>
               <select
@@ -54,11 +58,31 @@ export function ComboFlowCreateGate() {
               </select>
             </div>
 
+            <div className="space-y-2">
+              <label htmlFor="combo-flow-create-control" className="text-sm font-medium text-white">
+                操作タイプ
+              </label>
+              <select
+                id="combo-flow-create-control"
+                value={controlScheme}
+                onChange={(event) => setControlScheme(event.target.value as ComboFlowControlScheme)}
+                className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none"
+              >
+                {COMBO_FLOW_CONTROL_SCHEMES.map((scheme) => (
+                  <option key={scheme} value={scheme}>
+                    {getComboFlowControlSchemeLabel(scheme)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <button
               type="button"
               disabled={!characterName}
               onClick={() =>
-                router.push(`/combo-flow/new?character=${encodeURIComponent(characterName)}`)
+                router.push(
+                  `/combo-flow/new?character=${encodeURIComponent(characterName)}&control=${encodeURIComponent(controlScheme)}`,
+                )
               }
               className="primary-action min-w-[12rem] disabled:opacity-50"
             >

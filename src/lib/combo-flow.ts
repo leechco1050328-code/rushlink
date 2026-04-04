@@ -28,11 +28,14 @@ export const COMBO_FLOW_CHARACTERS = [
 
 export type ComboFlowCharacter = (typeof COMBO_FLOW_CHARACTERS)[number];
 
+export const COMBO_FLOW_CONTROL_SCHEMES = ["classic", "modern"] as const;
+export type ComboFlowControlScheme = (typeof COMBO_FLOW_CONTROL_SCHEMES)[number];
+
 export const COMBO_FLOW_NODE_TAGS = [
-  "キャンセルラッシュ",
   "通常ヒット",
   "カウンター",
   "パニカン",
+  "キャンセルラッシュ",
   "端",
   "中央",
   "始動",
@@ -48,10 +51,15 @@ export const COMBO_FLOW_EDGE_HINTS = [
   "DR",
   "キャンセル",
   "リンク",
-  "歩き",
-] as const;
+  "溜め",
+];
 
-export const COMBO_FLOW_MOVE_GROUPS = [
+type ComboFlowMoveGroupDefinition = {
+  label: string;
+  options: string[];
+};
+
+const CLASSIC_MOVE_GROUPS: ComboFlowMoveGroupDefinition[] = [
   {
     label: "通常技",
     options: [
@@ -88,16 +96,16 @@ export const COMBO_FLOW_MOVE_GROUPS = [
       "↓↘→+弱K",
       "↓↘→+中K",
       "↓↘→+大K",
-      "↓↙←+弱P",
-      "↓↙←+中P",
-      "↓↙←+大P",
-      "↓↙←+弱K",
-      "↓↙←+中K",
-      "↓↙←+大K",
-      "←ため→+弱P",
-      "←ため→+中P",
-      "←ため→+大P",
-      "↓ため↑+K",
+      "←溜め→+弱P",
+      "←溜め→+中P",
+      "←溜め→+大P",
+      "←溜め→+弱K",
+      "←溜め→+中K",
+      "←溜め→+大K",
+      "↓溜め↑+弱P",
+      "↓溜め↑+中P",
+      "↓溜め↑+大P",
+      "↓溜め↑+K",
       "→↓↘+P",
       "1回転+大P",
       "1回転+大K",
@@ -116,18 +124,73 @@ export const COMBO_FLOW_MOVE_GROUPS = [
       "前ステップ",
       "後ろステップ",
       "ドライブラッシュ",
-      "OD技",
+      "OD必殺技",
       "↓↓",
       "↑↑",
       "→→",
       "←←",
     ],
   },
-] as const;
+];
 
+const MODERN_MOVE_GROUPS: ComboFlowMoveGroupDefinition[] = [
+  {
+    label: "通常技",
+    options: [
+      "弱",
+      "中",
+      "強",
+      "しゃがみ弱",
+      "しゃがみ中",
+      "しゃがみ強",
+      "ジャンプ弱",
+      "ジャンプ中",
+      "ジャンプ強",
+      "アシスト弱",
+      "アシスト中",
+      "アシスト強",
+    ],
+  },
+  {
+    label: "特殊技",
+    options: ["引き強", "前強", "溜め強", "前中", "タゲコン"],
+  },
+  {
+    label: "コマンド技",
+    options: [
+      "必殺技",
+      "↓+必殺技",
+      "→+必殺技",
+      "←+必殺技",
+      "↑+必殺技",
+      "P派生",
+      "K派生",
+    ],
+  },
+  {
+    label: "SA",
+    options: ["SA1", "SA2", "SA3"],
+  },
+  {
+    label: "その他",
+    options: [
+      "ジャンプ",
+      "前ステップ",
+      "後ろステップ",
+      "ドライブラッシュ",
+      "OD必殺技",
+      "↓↓",
+      "↑↑",
+      "→→",
+      "←←",
+    ],
+  },
+];
+
+export const COMBO_FLOW_MOVE_GROUPS = CLASSIC_MOVE_GROUPS;
 export type ComboFlowNodeTag = (typeof COMBO_FLOW_NODE_TAGS)[number];
-export type ComboFlowMoveGroup = (typeof COMBO_FLOW_MOVE_GROUPS)[number];
-export type ComboFlowMoveGroupLabel = (typeof COMBO_FLOW_MOVE_GROUPS)[number]["label"];
+export type ComboFlowMoveGroup = ComboFlowMoveGroupDefinition;
+export type ComboFlowMoveGroupLabel = string;
 export const COMBO_FLOW_HANDLE_SIDES = ["left", "right", "top", "bottom"] as const;
 export type ComboFlowNodeHandleSide = (typeof COMBO_FLOW_HANDLE_SIDES)[number];
 
@@ -155,6 +218,7 @@ export type ComboFlowPost = {
   user_id: string;
   author_name: string;
   character_name: string;
+  control_scheme: ComboFlowControlScheme;
   title: string;
   summary: string;
   flow_nodes: ComboFlowNode[];
@@ -163,15 +227,30 @@ export type ComboFlowPost = {
   updated_at?: string;
 };
 
-export function getComboFlowMoveGroupLabel(move: string): ComboFlowMoveGroupLabel | "" {
-  const group = COMBO_FLOW_MOVE_GROUPS.find((item) =>
+export function getComboFlowMoveGroups(controlScheme: ComboFlowControlScheme) {
+  return controlScheme === "modern" ? MODERN_MOVE_GROUPS : CLASSIC_MOVE_GROUPS;
+}
+
+export function getComboFlowMoveGroupLabel(
+  move: string,
+  controlScheme: ComboFlowControlScheme = "classic",
+): ComboFlowMoveGroupLabel | "" {
+  const group = getComboFlowMoveGroups(controlScheme).find((item) =>
     item.options.some((option) => option === move),
   );
   return group?.label ?? "";
 }
 
+export function getComboFlowControlSchemeLabel(controlScheme: ComboFlowControlScheme) {
+  return controlScheme === "modern" ? "モダン" : "クラシック";
+}
+
 export function isComboFlowCharacter(value: string): value is ComboFlowCharacter {
   return COMBO_FLOW_CHARACTERS.includes(value as ComboFlowCharacter);
+}
+
+export function isComboFlowControlScheme(value: string): value is ComboFlowControlScheme {
+  return COMBO_FLOW_CONTROL_SCHEMES.includes(value as ComboFlowControlScheme);
 }
 
 export function getComboFlowDetailHref(id: number) {
@@ -195,10 +274,13 @@ export function buildComboFlowTitle(nodes: ComboFlowNode[]) {
   return moves.join(" > ");
 }
 
-export function createEmptyComboNode(index: number): ComboFlowNode {
+export function createEmptyComboNode(
+  index: number,
+  controlScheme: ComboFlowControlScheme = "classic",
+): ComboFlowNode {
   return {
     id: `node-${Date.now()}-${index}`,
-    move: "弱P",
+    move: controlScheme === "modern" ? "弱" : "弱P",
     tags: index === 0 ? ["始動"] : [],
     note: "",
     x: 80 + index * 220,

@@ -8,6 +8,7 @@ import { CharacterChip } from "@/components/character-chip";
 import { ComboFlowCanvas } from "@/components/combo-flow-canvas";
 import {
   getComboFlowEditHref,
+  getComboFlowControlSchemeLabel,
   type ComboFlowCharacter,
   type ComboFlowPost,
 } from "@/lib/combo-flow";
@@ -71,7 +72,7 @@ export function ComboFlowViewer({ postId }: ComboFlowViewerProps) {
         client
           .from("combo_flow_posts")
           .select(
-            "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
+            "id, user_id, author_name, character_name, control_scheme, title, summary, flow_nodes, flow_edges, created_at, updated_at",
           )
           .eq("id", postId)
           .maybeSingle(),
@@ -167,6 +168,9 @@ export function ComboFlowViewer({ postId }: ComboFlowViewerProps) {
                   tone="accent"
                 />
                 <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-[var(--muted)]">
+                  {getComboFlowControlSchemeLabel(post.control_scheme ?? "classic")}
+                </span>
+                <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-[var(--muted)]">
                   投稿者: {post.author_name}
                 </span>
                 <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-[var(--muted)]">
@@ -184,6 +188,7 @@ export function ComboFlowViewer({ postId }: ComboFlowViewerProps) {
               <ComboFlowCanvas
                 nodes={post.flow_nodes}
                 edges={post.flow_edges}
+                controlScheme={post.control_scheme ?? "classic"}
                 interactive={false}
               />
             </section>

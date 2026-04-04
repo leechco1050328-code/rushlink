@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   COMBO_FLOW_EDGE_HINTS,
   COMBO_FLOW_HANDLE_SIDES,
-  COMBO_FLOW_MOVE_GROUPS,
   COMBO_FLOW_NODE_TAGS,
+  getComboFlowMoveGroups,
   getComboFlowMoveGroupLabel,
   type ComboFlowEdge,
+  type ComboFlowControlScheme,
   type ComboFlowNode,
   type ComboFlowNodeHandleSide,
   type ComboFlowNodeTag,
@@ -27,6 +28,7 @@ const ZOOM_STEP = 0.125;
 type ComboFlowCanvasProps = {
   nodes: ComboFlowNode[];
   edges: ComboFlowEdge[];
+  controlScheme?: ComboFlowControlScheme;
   selectedNodeIds?: string[];
   interactive?: boolean;
   onChangeSelection?: (nodeIds: string[]) => void;
@@ -213,9 +215,10 @@ function getNearestHandleSide(
   return closestSide;
 }
 
-function getMoveOptions(move: string) {
-  const groupLabel = getComboFlowMoveGroupLabel(move);
-  const group = COMBO_FLOW_MOVE_GROUPS.find((item) => item.label === groupLabel);
+function getMoveOptions(move: string, controlScheme: ComboFlowControlScheme) {
+  const moveGroups = getComboFlowMoveGroups(controlScheme);
+  const groupLabel = getComboFlowMoveGroupLabel(move, controlScheme);
+  const group = moveGroups.find((item) => item.label === groupLabel);
 
   if (!group) {
     return move ? [move] : [];
@@ -231,6 +234,7 @@ function getMoveOptions(move: string) {
 export function ComboFlowCanvas({
   nodes,
   edges,
+  controlScheme = "classic",
   selectedNodeIds = [],
   interactive = false,
   onChangeSelection,
@@ -691,8 +695,9 @@ export function ComboFlowCanvas({
             const showNodeToolbar =
               interactive && (hoveredNodeId === node.id || activeNodeEditorId === node.id);
             const showNodeEditor = interactive && activeNodeEditorId === node.id;
-            const moveGroupLabel = getComboFlowMoveGroupLabel(node.move);
-            const moveOptions = getMoveOptions(node.move);
+            const moveGroups = getComboFlowMoveGroups(controlScheme);
+            const moveGroupLabel = getComboFlowMoveGroupLabel(node.move, controlScheme);
+            const moveOptions = getMoveOptions(node.move, controlScheme);
             const isEdgeTarget =
               interactive && edgeDrag !== null && edgeDrag.sourceId !== node.id;
 
@@ -921,7 +926,7 @@ export function ComboFlowCanvas({
                       <select
                         value={moveGroupLabel}
                         onChange={(event) => {
-                          const nextGroup = COMBO_FLOW_MOVE_GROUPS.find(
+                          const nextGroup = moveGroups.find(
                             (item) => item.label === event.target.value,
                           );
                           onUpdateNode?.(node.id, {
@@ -931,7 +936,7 @@ export function ComboFlowCanvas({
                         className="w-full rounded-2xl border border-white/10 bg-black/25 px-3 py-2.5 text-sm text-white outline-none"
                       >
                         <option value="">選択してください</option>
-                        {COMBO_FLOW_MOVE_GROUPS.map((group) => (
+                        {moveGroups.map((group) => (
                           <option key={group.label} value={group.label}>
                             {group.label}
                           </option>

@@ -10,11 +10,14 @@ import { ComboFlowCanvas } from "@/components/combo-flow-canvas";
 import { SharePostActions } from "@/components/share-post-actions";
 import { getAdSenseMidSlot } from "@/lib/adsense";
 import {
-  COMBO_FLOW_CHARACTERS,
   buildComboFlowTitle,
   createEmptyComboNode,
   getComboFlowDetailHref,
+  getComboFlowControlSchemeLabel,
+  isComboFlowCharacter,
+  isComboFlowControlScheme,
   type ComboFlowCharacter,
+  type ComboFlowControlScheme,
   type ComboFlowEdge,
   type ComboFlowNode,
   type ComboFlowNodeHandleSide,
@@ -27,6 +30,7 @@ type ComboFlowEditorProps =
   | {
       mode: "create";
       initialCharacter?: ComboFlowCharacter;
+      initialControlScheme?: ComboFlowControlScheme;
     }
   | {
       mode: "edit";
@@ -35,6 +39,7 @@ type ComboFlowEditorProps =
 
 type ComboFlowDraft = {
   characterName: ComboFlowCharacter | "";
+  controlScheme: ComboFlowControlScheme;
   summary: string;
   nodes: ComboFlowNode[];
   edges: ComboFlowEdge[];
@@ -78,8 +83,8 @@ function normalizeEdges(edges: ComboFlowEdge[], nodeIds: Set<string>) {
   );
 }
 
-function createInitialNodes() {
-  return [createEmptyComboNode(0), createEmptyComboNode(1)];
+function createInitialNodes(controlScheme: ComboFlowControlScheme) {
+  return [createEmptyComboNode(0, controlScheme), createEmptyComboNode(1, controlScheme)];
 }
 
 function readCreateDraft(): ComboFlowDraft | null {
@@ -95,17 +100,19 @@ function readCreateDraft(): ComboFlowDraft | null {
     }
 
     const parsed = JSON.parse(raw) as Partial<ComboFlowDraft>;
+    const draftCharacterName = parsed.characterName ?? "";
+    const draftControlScheme = parsed.controlScheme ?? "";
 
     return {
-      characterName:
-        parsed.characterName && COMBO_FLOW_CHARACTERS.includes(parsed.characterName)
-          ? parsed.characterName
-          : "",
+      characterName: isComboFlowCharacter(draftCharacterName) ? draftCharacterName : "",
+      controlScheme: isComboFlowControlScheme(draftControlScheme)
+        ? draftControlScheme
+        : "classic",
       summary: typeof parsed.summary === "string" ? parsed.summary : "",
       nodes:
         Array.isArray(parsed.nodes) && parsed.nodes.length > 0
           ? (parsed.nodes as ComboFlowNode[])
-          : createInitialNodes(),
+          : createInitialNodes(isComboFlowControlScheme(draftControlScheme) ? draftControlScheme : "classic"),
       edges: Array.isArray(parsed.edges) ? (parsed.edges as ComboFlowEdge[]) : [],
     };
   } catch {
@@ -161,14 +168,20 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const bottomAdSlot = getAdSenseMidSlot();
   const editPostId = props.mode === "edit" ? props.postId : null;
   const createInitialCharacter = props.mode === "create" ? (props.initialCharacter ?? "") : "";
+  const createInitialControlScheme = props.mode === "create" ? props.initialControlScheme : undefined;
   const [session, setSession] = useState<Session | null>(null);
   const [post, setPost] = useState<ComboFlowPost | null>(null);
   const [isOwner, setIsOwner] = useState(props.mode === "create");
   const [characterName, setCharacterName] = useState<ComboFlowCharacter | "">(
     createInitialCharacter,
   );
+  const [controlScheme, setControlScheme] = useState<ComboFlowControlScheme>(
+    createInitialControlScheme ?? "classic",
+  );
   const [summary, setSummary] = useState("");
-  const [nodes, setNodes] = useState<ComboFlowNode[]>(createInitialNodes());
+  const [nodes, setNodes] = useState<ComboFlowNode[]>(
+    createInitialNodes(createInitialControlScheme ?? "classic"),
+  );
   const [edges, setEdges] = useState<ComboFlowEdge[]>([]);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [message, setMessage] = useState("");
@@ -190,15 +203,20 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         if (cachedPost) {
           setPost(cachedPost);
           setCharacterName(
-            COMBO_FLOW_CHARACTERS.includes(cachedPost.character_name as ComboFlowCharacter)
-              ? (cachedPost.character_name as ComboFlowCharacter)
-              : "",
+            isComboFlowCharacter(cachedPost.character_name) ? cachedPost.character_name : "",
+          );
+          setControlScheme(
+            isComboFlowControlScheme(cachedPost.control_scheme) ? cachedPost.control_scheme : "classic",
           );
           setSummary(cachedPost.summary ?? "");
           setNodes(
             Array.isArray(cachedPost.flow_nodes) && cachedPost.flow_nodes.length > 0
               ? cachedPost.flow_nodes
-              : createInitialNodes(),
+              : createInitialNodes(
+                  isComboFlowControlScheme(cachedPost.control_scheme)
+                    ? cachedPost.control_scheme
+                    : "classic",
+                ),
           );
           setEdges(Array.isArray(cachedPost.flow_edges) ? cachedPost.flow_edges : []);
           setMessage("保存済みデータを先に表示しています。");
@@ -211,7 +229,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           ? client
               .from("combo_flow_posts")
               .select(
-                "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
+                "id, user_id, author_name, character_name, control_scheme, title, summary, flow_nodes, flow_edges, created_at, updated_at",
               )
               .eq("id", editPostId ?? 0)
               .maybeSingle()
@@ -237,6 +255,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
         if (draft) {
           setCharacterName(createInitialCharacter || draft.characterName);
+          setControlScheme(createInitialControlScheme ?? draft.controlScheme);
           setSummary(draft.summary);
           setNodes(draft.nodes);
           setEdges(draft.edges);
@@ -247,6 +266,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           );
         } else {
           setCharacterName(createInitialCharacter);
+          setControlScheme(createInitialControlScheme ?? "classic");
           setMessage(
             activeSession?.user
               ? "コンボフローを作成して保存できます。"
@@ -278,13 +298,18 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
       setPost(nextPost);
       writeComboFlowCache(nextPost);
-      setCharacterName(
-        COMBO_FLOW_CHARACTERS.includes(nextPost.character_name as ComboFlowCharacter)
-          ? (nextPost.character_name as ComboFlowCharacter)
-          : "",
+      setCharacterName(isComboFlowCharacter(nextPost.character_name) ? nextPost.character_name : "");
+      setControlScheme(
+        isComboFlowControlScheme(nextPost.control_scheme) ? nextPost.control_scheme : "classic",
       );
       setSummary(nextPost.summary ?? "");
-      setNodes(Array.isArray(nextPost.flow_nodes) ? nextPost.flow_nodes : createInitialNodes());
+      setNodes(
+        Array.isArray(nextPost.flow_nodes)
+          ? nextPost.flow_nodes
+          : createInitialNodes(
+              isComboFlowControlScheme(nextPost.control_scheme) ? nextPost.control_scheme : "classic",
+            ),
+      );
       setEdges(Array.isArray(nextPost.flow_edges) ? nextPost.flow_edges : []);
       setIsOwner(true);
       setMessage("自分のコンボフローを編集中です。");
@@ -301,7 +326,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     return () => {
       mounted = false;
     };
-  }, [createInitialCharacter, editPostId, props.mode, router, supabase]);
+  }, [createInitialCharacter, createInitialControlScheme, editPostId, props.mode, router, supabase]);
 
   useEffect(() => {
     if (props.mode !== "create" || !draftReady) {
@@ -310,11 +335,12 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
 
     writeCreateDraft({
       characterName,
+      controlScheme,
       summary,
       nodes,
       edges,
     });
-  }, [characterName, draftReady, edges, nodes, props.mode, summary]);
+  }, [characterName, controlScheme, draftReady, edges, nodes, props.mode, summary]);
 
   function updateNode(nodeId: string, patch: Partial<ComboFlowNode>) {
     setNodes((current) =>
@@ -356,7 +382,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   }
 
   function addNode() {
-    const nextNode = createEmptyComboNode(nodes.length);
+    const nextNode = createEmptyComboNode(nodes.length, controlScheme);
     setNodes((current) => [...current, nextNode]);
     setSelectedNodeIds([nextNode.id]);
     setMessage("ノードを追加しました。");
@@ -500,6 +526,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         const resolvedTitle = buildComboFlowTitle(nextNodes);
         const payload = {
           character_name: characterName,
+          control_scheme: controlScheme,
           title: resolvedTitle,
           summary: summary.trim(),
           flow_nodes: nextNodes,
@@ -528,6 +555,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
             user_id: session.user.id,
             author_name: authorName,
             character_name: characterName,
+            control_scheme: controlScheme,
             title: resolvedTitle,
             summary: payload.summary,
             flow_nodes: nextNodes,
@@ -559,6 +587,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           user_id: post?.user_id ?? session.user.id,
           author_name: post?.author_name ?? authorName,
           character_name: characterName,
+          control_scheme: controlScheme,
           title: resolvedTitle,
           summary: payload.summary,
           flow_nodes: nextNodes,
@@ -590,13 +619,15 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
               コンボフロー管理へ戻る
             </Link>
 
-            {characterName ? (
-              <CharacterChip name={characterName} size="md" tone="accent" />
-            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {characterName ? <CharacterChip name={characterName} size="md" tone="accent" /> : null}
+              <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-[var(--muted)]">
+                {getComboFlowControlSchemeLabel(controlScheme)}
+              </span>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {characterName ? <CharacterChip name={characterName} size="md" tone="accent" /> : null}
             {isOwner && session?.user ? (
               <button
                 type="button"
@@ -678,6 +709,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
           <ComboFlowCanvas
             nodes={nodes}
             edges={edges}
+            controlScheme={controlScheme}
             selectedNodeIds={selectedNodeIds}
             interactive={Boolean(session?.user && isOwner)}
             onChangeSelection={setSelectedNodeIds}

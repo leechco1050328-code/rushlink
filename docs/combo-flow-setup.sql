@@ -3,6 +3,7 @@ create table if not exists public.combo_flow_posts (
   user_id uuid not null references auth.users (id) on delete cascade,
   author_name text not null default '',
   character_name text not null default '',
+  control_scheme text not null default 'classic',
   title text not null default '',
   summary text not null default '',
   flow_nodes jsonb not null default '[]'::jsonb,
@@ -14,6 +15,7 @@ create table if not exists public.combo_flow_posts (
 alter table public.combo_flow_posts
   add column if not exists author_name text not null default '',
   add column if not exists character_name text not null default '',
+  add column if not exists control_scheme text not null default 'classic',
   add column if not exists title text not null default '',
   add column if not exists summary text not null default '',
   add column if not exists flow_nodes jsonb not null default '[]'::jsonb,

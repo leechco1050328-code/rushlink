@@ -8,6 +8,7 @@ import { SharePostActions } from "@/components/share-post-actions";
 import {
   getComboFlowDetailHref,
   getComboFlowEditHref,
+  getComboFlowControlSchemeLabel,
   type ComboFlowPost,
 } from "@/lib/combo-flow";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -68,7 +69,7 @@ export function ComboFlowDashboard() {
       const { data, error } = await client
         .from("combo_flow_posts")
         .select(
-          "id, user_id, author_name, character_name, title, summary, flow_nodes, flow_edges, created_at, updated_at",
+          "id, user_id, author_name, character_name, control_scheme, title, summary, flow_nodes, flow_edges, created_at, updated_at",
         )
         .eq("user_id", activeSession.user.id)
         .order("updated_at", { ascending: false });
@@ -165,7 +166,12 @@ export function ComboFlowDashboard() {
             <article key={post.id} className="panel rounded-[30px] px-6 py-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-3">
-                  <CharacterChip name={post.character_name} size="md" tone="accent" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CharacterChip name={post.character_name} size="md" tone="accent" />
+                    <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-[var(--muted)]">
+                      {getComboFlowControlSchemeLabel(post.control_scheme ?? "classic")}
+                    </span>
+                  </div>
                   <h3 className="text-2xl font-semibold text-white">{post.title}</h3>
                   <p className="text-sm leading-7 text-[var(--muted)]">
                     作成: {formatPostedAt(post.created_at)}

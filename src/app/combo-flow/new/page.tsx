@@ -1,25 +1,34 @@
 import { ComboFlowCreateGate } from "@/components/combo-flow-create-gate";
 import { ComboFlowEditor } from "@/components/combo-flow-editor";
 import {
-  COMBO_FLOW_CHARACTERS,
+  isComboFlowCharacter,
+  isComboFlowControlScheme,
   type ComboFlowCharacter,
+  type ComboFlowControlScheme,
 } from "@/lib/combo-flow";
 
 export default async function NewComboFlowPage({
   searchParams,
 }: {
-  searchParams: Promise<{ character?: string }>;
+  searchParams: Promise<{ character?: string; control?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const character =
-    resolvedSearchParams.character &&
-    COMBO_FLOW_CHARACTERS.includes(resolvedSearchParams.character as ComboFlowCharacter)
-      ? (resolvedSearchParams.character as ComboFlowCharacter)
-      : null;
+  const character = isComboFlowCharacter(resolvedSearchParams.character ?? "")
+    ? (resolvedSearchParams.character as ComboFlowCharacter)
+    : null;
+  const controlScheme = isComboFlowControlScheme(resolvedSearchParams.control ?? "")
+    ? (resolvedSearchParams.control as ComboFlowControlScheme)
+    : null;
 
-  if (!character) {
+  if (!character || !controlScheme) {
     return <ComboFlowCreateGate />;
   }
 
-  return <ComboFlowEditor mode="create" initialCharacter={character} />;
+  return (
+    <ComboFlowEditor
+      mode="create"
+      initialCharacter={character}
+      initialControlScheme={controlScheme}
+    />
+  );
 }
