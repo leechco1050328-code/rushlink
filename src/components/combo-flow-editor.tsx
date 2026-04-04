@@ -26,6 +26,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 type ComboFlowEditorProps =
   | {
       mode: "create";
+      initialCharacter?: ComboFlowCharacter;
     }
   | {
       mode: "edit";
@@ -48,6 +49,15 @@ function getComboFlowCacheKey(postId: number) {
 function getMessageFromError(error: unknown) {
   if (error instanceof Error) {
     return error.message;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
   }
 
   return "保存に失敗しました。";
@@ -150,10 +160,13 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
   const router = useRouter();
   const bottomAdSlot = getAdSenseMidSlot();
   const editPostId = props.mode === "edit" ? props.postId : null;
+  const createInitialCharacter = props.mode === "create" ? (props.initialCharacter ?? "") : "";
   const [session, setSession] = useState<Session | null>(null);
   const [post, setPost] = useState<ComboFlowPost | null>(null);
   const [isOwner, setIsOwner] = useState(props.mode === "create");
-  const [characterName, setCharacterName] = useState<ComboFlowCharacter | "">("");
+  const [characterName, setCharacterName] = useState<ComboFlowCharacter | "">(
+    createInitialCharacter,
+  );
   const [summary, setSummary] = useState("");
   const [nodes, setNodes] = useState<ComboFlowNode[]>(createInitialNodes());
   const [edges, setEdges] = useState<ComboFlowEdge[]>([]);
@@ -223,7 +236,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
         const draft = readCreateDraft();
 
         if (draft) {
-          setCharacterName(draft.characterName);
+          setCharacterName(createInitialCharacter || draft.characterName);
           setSummary(draft.summary);
           setNodes(draft.nodes);
           setEdges(draft.edges);
@@ -233,6 +246,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
               : "前回の下書きを復元しました。公開保存するにはログインしてください。",
           );
         } else {
+          setCharacterName(createInitialCharacter);
           setMessage(
             activeSession?.user
               ? "コンボフローを作成して保存できます。"
@@ -282,7 +296,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     return () => {
       mounted = false;
     };
-  }, [editPostId, props.mode, supabase]);
+  }, [createInitialCharacter, editPostId, props.mode, supabase]);
 
   useEffect(() => {
     if (props.mode !== "create" || !draftReady) {
@@ -505,27 +519,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
               コンボフロー管理へ戻る
             </Link>
 
-            {session?.user ? (
-              <div className="max-w-[18rem]">
-                <label className="sr-only" htmlFor="combo-flow-character">
-                  キャラクター
-                </label>
-                <select
-                  id="combo-flow-character"
-                  value={characterName}
-                  onChange={(event) => setCharacterName(event.target.value as ComboFlowCharacter)}
-                  disabled={!isOwner}
-                  className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none disabled:opacity-60"
-                >
-                  <option value="">キャラクターを選択</option>
-                  {COMBO_FLOW_CHARACTERS.map((character) => (
-                    <option key={character} value={character}>
-                      {character}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : characterName ? (
+            {characterName ? (
               <CharacterChip name={characterName} size="md" tone="accent" />
             ) : null}
           </div>
