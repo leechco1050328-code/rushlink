@@ -5,7 +5,11 @@ import { useEffect, useState, useTransition } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { CharacterChip } from "@/components/character-chip";
 import { SharePostActions } from "@/components/share-post-actions";
-import { getComboFlowDetailHref, type ComboFlowPost } from "@/lib/combo-flow";
+import {
+  getComboFlowDetailHref,
+  getComboFlowEditHref,
+  type ComboFlowPost,
+} from "@/lib/combo-flow";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function formatPostedAt(value: string) {
@@ -57,7 +61,7 @@ export function ComboFlowDashboard() {
       if (!activeSession?.user) {
         setPosts([]);
         setIsLoading(false);
-        setMessage("ログインすると自分のコンボフローを作成・管理できます。");
+        setMessage("ログインすると、自分のコンボフローを管理できます。");
         return;
       }
 
@@ -81,13 +85,14 @@ export function ComboFlowDashboard() {
 
       setPosts((data ?? []) as ComboFlowPost[]);
       setIsLoading(false);
-      setMessage(`自分のコンボフローを ${data?.length ?? 0} 件表示しています。`);
+      setMessage(`自分のコンボフローを ${(data ?? []).length} 件表示しています。`);
     }
 
     loadDashboard().catch((error: unknown) => {
       if (!mounted) {
         return;
       }
+
       setMessage(`読み込みに失敗しました: ${getMessageFromError(error)}`);
       setIsLoading(false);
     });
@@ -105,6 +110,7 @@ export function ComboFlowDashboard() {
     startTransition(async () => {
       try {
         const { error } = await supabase.from("combo_flow_posts").delete().eq("id", postId);
+
         if (error) {
           throw error;
         }
@@ -140,26 +146,23 @@ export function ComboFlowDashboard() {
       {!session?.user ? (
         <section className="panel rounded-[30px] px-6 py-6">
           <p className="text-sm leading-7 text-[var(--muted)]">
-            ログインすると、キャラクターを選んで自分専用のコンボフローページを作成できます。
+            ログインすると、キャラクターごとのコンボフローを保存して管理できます。
           </p>
         </section>
       ) : isLoading ? (
         <section className="panel rounded-[30px] px-6 py-6">
-          <p className="text-sm leading-7 text-[var(--muted)]">読み込み中...</p>
+          <p className="text-sm leading-7 text-[var(--muted)]">読み込み中です...</p>
         </section>
       ) : posts.length === 0 ? (
         <section className="panel rounded-[30px] px-6 py-6">
           <p className="text-sm leading-7 text-[var(--muted)]">
-            まだコンボフローはありません。新規作成から最初の1件を作ってみましょう。
+            まだコンボフローはありません。新規作成から最初の1件を作成できます。
           </p>
         </section>
       ) : (
         <section className="grid gap-4 xl:grid-cols-2">
           {posts.map((post) => (
-            <article
-              key={post.id}
-              className="panel rounded-[30px] px-6 py-6"
-            >
+            <article key={post.id} className="panel rounded-[30px] px-6 py-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-3">
                   <CharacterChip name={post.character_name} size="md" tone="accent" />
@@ -173,10 +176,10 @@ export function ComboFlowDashboard() {
                   ) : null}
                   <div className="flex flex-wrap gap-2 text-xs text-[var(--muted)]">
                     <span className="rounded-full bg-white/8 px-3 py-1">
-                      {post.flow_nodes.length} ノード
+                      ノード {post.flow_nodes.length}
                     </span>
                     <span className="rounded-full bg-white/8 px-3 py-1">
-                      {post.flow_edges.length} 矢印
+                      ルート {post.flow_edges.length}
                     </span>
                   </div>
                 </div>
@@ -184,6 +187,12 @@ export function ComboFlowDashboard() {
                 <div className="flex flex-wrap gap-2">
                   <Link
                     href={getComboFlowDetailHref(post.id)}
+                    className="secondary-action min-h-0 px-4 py-2 text-sm"
+                  >
+                    公開ページ
+                  </Link>
+                  <Link
+                    href={getComboFlowEditHref(post.id)}
                     className="secondary-action min-h-0 px-4 py-2 text-sm"
                   >
                     編集

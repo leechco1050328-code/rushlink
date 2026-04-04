@@ -271,6 +271,11 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       const nextPost = postResult.data as ComboFlowPost;
       const ownsPost = activeSession?.user?.id === nextPost.user_id;
 
+      if (!ownsPost) {
+        router.replace(getComboFlowDetailHref(nextPost.id));
+        return;
+      }
+
       setPost(nextPost);
       writeComboFlowCache(nextPost);
       setCharacterName(
@@ -281,8 +286,8 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
       setSummary(nextPost.summary ?? "");
       setNodes(Array.isArray(nextPost.flow_nodes) ? nextPost.flow_nodes : createInitialNodes());
       setEdges(Array.isArray(nextPost.flow_edges) ? nextPost.flow_edges : []);
-      setIsOwner(Boolean(ownsPost));
-      setMessage(ownsPost ? "自分のコンボフローを編集中です。" : "公開中のコンボフローを表示しています。");
+      setIsOwner(true);
+      setMessage("自分のコンボフローを編集中です。");
     }
 
     loadEditor().catch((error: unknown) => {
@@ -296,7 +301,7 @@ export function ComboFlowEditor(props: ComboFlowEditorProps) {
     return () => {
       mounted = false;
     };
-  }, [createInitialCharacter, editPostId, props.mode, supabase]);
+  }, [createInitialCharacter, editPostId, props.mode, router, supabase]);
 
   useEffect(() => {
     if (props.mode !== "create" || !draftReady) {

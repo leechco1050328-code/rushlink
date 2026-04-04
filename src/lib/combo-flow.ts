@@ -178,6 +178,10 @@ export function getComboFlowDetailHref(id: number) {
   return `/combo-flow/${id}`;
 }
 
+export function getComboFlowEditHref(id: number) {
+  return `/combo-flow/${id}/edit`;
+}
+
 export function buildComboFlowTitle(nodes: ComboFlowNode[]) {
   const moves = nodes
     .filter((node) => node.move.trim())

@@ -1,4 +1,4 @@
-import { ComboFlowEditor } from "@/components/combo-flow-editor";
+import { ComboFlowViewer } from "@/components/combo-flow-viewer";
 
 export default async function ComboFlowDetailPage({
   params,
@@ -8,5 +8,5 @@ export default async function ComboFlowDetailPage({
   const resolvedParams = await params;
   const postId = Number.parseInt(resolvedParams.id, 10);
 
-  return <ComboFlowEditor mode="edit" postId={Number.isNaN(postId) ? 0 : postId} />;
+  return <ComboFlowViewer postId={Number.isNaN(postId) ? 0 : postId} />;
 }
