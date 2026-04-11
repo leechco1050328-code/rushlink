@@ -9,65 +9,78 @@ const pageTitle = `スト6の対戦募集なら ${SITE_NAME} | MR帯・目的別
 const pageDescription =
   "スト6の対戦募集、教えたい・教わりたい募集、リプレイIDを使った相談まで1か所で探せるページです。Street Fighter 6 で同じくらいのランク帯や目的に合う相手を見つけたい人向けにまとめました。";
 
-const featureCards = [
+const routes = [
   {
-    title: "対戦募集を一覧で探せる",
-    description:
-      "Street Fighter 6 の対戦募集をまとめて確認できます。募集一覧から、今動いている投稿を見つけやすい構成です。",
-    points: ["新しい募集をまとめて確認できる", "対戦相手を探している人を見つけやすい"],
+    label: "対戦募集",
+    title: "今すぐ回せる相手を探す",
+    description: "募集一覧から、動いている投稿をすぐ見つける導線です。",
+    detail: "一覧を見る",
+    Icon: DuelIcon,
   },
   {
-    title: "教えたい / 教わりたい募集にも対応",
-    description:
-      "ただ対戦するだけでなく、教えてほしい人や教えたい人向けの募集も扱えます。目的が合う相手を探しやすくなります。",
-    points: ["対戦だけでなく練習相手探しにも使える", "目的が伝わりやすいのでミスマッチを減らしやすい"],
+    label: "教わりたい",
+    title: "練習の目的が合う相手を探す",
+    description: "教えてほしい、教えたいの目的別で探しやすくしています。",
+    detail: "目的で選ぶ",
+    Icon: CoachIcon,
   },
   {
-    title: "リプレイIDを使った相談もできる",
-    description:
-      "対戦相手探しだけで終わらず、リプレイIDをもとに立ち回りやセットプレイの相談につなげられます。",
-    points: ["プレイ内容を具体的に相談しやすい", "次の課題を見つけたい人にも向いている"],
+    label: "リプレイ相談",
+    title: "試合後に改善ポイントを詰める",
+    description: "リプレイIDを使って、立ち回りやセットプレイを相談できます。",
+    detail: "相談へ進む",
+    Icon: ReplayIcon,
+  },
+];
+
+const compareRows = [
+  {
+    topic: "今動いている募集を探したい",
+    social: "投稿が流れやすい",
+    rushLink: "一覧で見返しやすい",
+  },
+  {
+    topic: "目的が合う相手を探したい",
+    social: "文面を読まないと分かりにくい",
+    rushLink: "対戦・教わりたい導線で分かれる",
+  },
+  {
+    topic: "試合後に相談もしたい",
+    social: "別の場所へ移動しがち",
+    rushLink: "リプレイ相談につなげやすい",
   },
 ];
 
 const steps = [
   {
-    title: "1. 募集一覧を見る",
-    description:
-      "まずは今出ている対戦募集や教えてほしい募集を見て、自分に近い条件の投稿があるか確認します。",
+    step: "01",
+    title: "一覧で探す",
+    description: "まずは今出ている募集を見る",
   },
   {
-    title: "2. 合う使い方を選ぶ",
-    description:
-      "対戦相手を探す、教えてほしい相手を探す、リプレイ相談を見るなど、目的に合う導線から進めます。",
+    step: "02",
+    title: "目的で選ぶ",
+    description: "対戦、教わりたい、相談の流れを選ぶ",
   },
   {
-    title: "3. 登録して参加する",
-    description:
-      "参加したいと思ったらユーザー登録して、募集の投稿や詳細のやり取りに進めます。",
+    step: "03",
+    title: "登録して参加",
+    description: "気になる募集があればそのまま進む",
   },
 ];
 
 const faqs = [
   {
-    question: "このページはどんな人向けですか？",
-    answer:
-      "Street Fighter 6 で対戦相手を探したい人、同じくらいのランク帯の相手を見つけたい人、教えてほしい相手を探したい人向けです。",
+    question: "どんな人向けですか？",
+    answer: "対戦相手、練習相手、相談相手をまとめて探したい人向けです。",
   },
   {
-    question: "対戦募集以外にも使えますか？",
-    answer:
-      "はい。教えたい / 教わりたい募集や、リプレイIDを使った相談ページにもつながっています。",
+    question: "一覧を見るだけでも使えますか？",
+    answer: "はい。まずは募集一覧を見て雰囲気を確認できます。",
   },
   {
-    question: "最初に見るべきページはどこですか？",
-    answer:
-      "まずは募集一覧ページを見るのがおすすめです。現在出ている投稿を確認して、サービスの雰囲気をつかめます。",
-  },
-  {
-    question: "登録しないと内容は見られませんか？",
-    answer:
-      "一覧ページでは公開されている募集を確認できます。実際に参加したり投稿したりするにはユーザー登録が必要です。",
+    question: "対戦後の振り返りにも使えますか？",
+    answer: "はい。リプレイIDを使った相談ページへそのまま進めます。",
   },
 ];
 
@@ -101,6 +114,63 @@ export const metadata: Metadata = {
   },
 };
 
+function DuelIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-11 w-11 text-[var(--accent-soft)]" aria-hidden="true">
+      <rect x="6" y="10" width="14" height="24" rx="5" fill="currentColor" fillOpacity="0.2" />
+      <rect x="28" y="14" width="14" height="24" rx="5" fill="currentColor" fillOpacity="0.38" />
+      <path
+        d="M18 22h12m-9-6l3 6-3 6"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CoachIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-11 w-11 text-[var(--secondary)]" aria-hidden="true">
+      <path
+        d="M10 14c0-2.2 1.8-4 4-4h20c2.2 0 4 1.8 4 4v12c0 2.2-1.8 4-4 4H24l-7 6v-6h-3c-2.2 0-4-1.8-4-4V14Z"
+        fill="currentColor"
+        fillOpacity="0.2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M18 18h12m-12 6h8"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ReplayIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-11 w-11 text-[var(--accent-soft)]" aria-hidden="true">
+      <circle cx="24" cy="24" r="16" fill="currentColor" fillOpacity="0.16" />
+      <path
+        d="M21 18.5 31 24l-10 5.5v-11Z"
+        fill="currentColor"
+        fillOpacity="0.86"
+        stroke="currentColor"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13 17.5a14 14 0 0 1 24-4.5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function SectionHeading({
   kicker,
   title,
@@ -115,6 +185,102 @@ function SectionHeading({
       <p className="display text-sm text-[var(--accent-soft)]">{kicker}</p>
       <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h2>
       <p className="text-sm leading-7 text-[var(--muted)] md:text-base">{description}</p>
+    </div>
+  );
+}
+
+function RouteMap() {
+  return (
+    <div className="hero-card rounded-[2rem] p-5 md:p-6">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="display text-xs text-[var(--accent-soft)]">MATCH FLOW</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-white">3つの入口</h2>
+          </div>
+          <div className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs text-white/68">
+            見る → 選ぶ → 参加
+          </div>
+        </div>
+
+        <div className="lp-route-shell space-y-3">
+          {routes.map((route, index) => (
+            <article key={route.title} className="lp-route-card">
+              <div className="lp-route-index">{index + 1}</div>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/52">{route.label}</p>
+                  <h3 className="text-lg font-semibold text-white">{route.title}</h3>
+                  <p className="text-sm leading-6 text-[var(--muted)]">{route.description}</p>
+                </div>
+                <route.Icon />
+              </div>
+              <div className="mt-4 inline-flex rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs text-white/74">
+                {route.detail}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BoardPreview() {
+  return (
+    <div className="panel rounded-[30px] p-5 md:p-6">
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="display text-xs text-[var(--accent-soft)]">BOARD PREVIEW</p>
+            <h3 className="mt-2 text-2xl font-bold tracking-tight text-white">一覧で見える形</h3>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs text-white/72">
+            <span className="lp-mini-chip">対戦募集</span>
+            <span className="lp-mini-chip">教わりたい</span>
+            <span className="lp-mini-chip">リプレイ相談</span>
+          </div>
+        </div>
+
+        <div className="rounded-[1.8rem] border border-white/10 bg-[rgba(6,12,18,0.56)] p-4">
+          <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
+            <span className="lp-search-token">MR 1600-1800</span>
+            <span className="lp-search-token">夜帯</span>
+            <span className="lp-search-token">BO3</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {[
+              {
+                label: "対戦募集",
+                title: "仕事後に2先で回したい人募集",
+                meta: "MR 1700付近 / 21:00以降",
+              },
+              {
+                label: "教わりたい",
+                title: "守り方を見てくれる人を探したい",
+                meta: "ダイヤ帯 / 立ち回り相談",
+              },
+              {
+                label: "リプレイ相談",
+                title: "リプレイIDあり、起き攻めを確認したい",
+                meta: "試合後の振り返り向け",
+              },
+            ].map((item) => (
+              <article key={item.title} className="lp-mock-post">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-2">
+                    <span className="lp-mini-chip">{item.label}</span>
+                    <h4 className="text-sm font-semibold text-white">{item.title}</h4>
+                    <p className="text-xs leading-6 text-white/62">{item.meta}</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-2xl border border-white/10 bg-white/8" />
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -169,20 +335,35 @@ export default function StreetFighter6TaisenBoshuPage() {
               <SiteNav invert />
             </header>
 
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.7fr)] lg:items-end">
-              <div className="space-y-5">
-                <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-white md:text-6xl md:leading-[1.05]">
-                  スト6の対戦募集を探すなら、
-                  <br />
-                  目的別に相手を見つけやすい
-                  <br />
-                  {SITE_NAME}
-                </h1>
-                <p className="max-w-3xl text-base leading-8 text-white/78 md:text-lg">
-                  スト6で対戦相手が見つからない、同じくらいのランク帯で回したい、
-                  教えてくれる相手を探したい。そんな時に、対戦募集、教えたい /
-                  教わりたい募集、リプレイIDを使った相談までひとつの流れで見られるページです。
-                </p>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:items-center">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-white md:text-6xl md:leading-[1.03]">
+                    スト6の対戦募集を、
+                    <br />
+                    読み込まなくても
+                    <br />
+                    探しやすくするページ
+                  </h1>
+                  <p className="max-w-2xl text-base leading-8 text-white/78 md:text-lg">
+                    対戦したい、教わりたい、試合後に相談したい。
+                    Rush Link ならその3つを別々の入口で見られます。
+                  </p>
+                </div>
+
+                <dl className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { value: "3", label: "入口" },
+                    { value: "一覧", label: "見返しやすさ" },
+                    { value: "相談", label: "試合後も継続" },
+                  ].map((item) => (
+                    <div key={item.label} className="lp-stat-tile">
+                      <dt className="text-xs uppercase tracking-[0.22em] text-white/48">{item.label}</dt>
+                      <dd className="mt-2 text-3xl font-bold text-white">{item.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+
                 <div className="flex flex-wrap gap-3">
                   <Link href="/board" className="primary-action w-auto min-w-[13rem]">
                     募集一覧を見る
@@ -197,138 +378,150 @@ export default function StreetFighter6TaisenBoshuPage() {
                     リプレイ相談を見る
                   </Link>
                 </div>
-                <p className="text-sm leading-7 text-white/64">
-                  対戦募集を探している人向けに、Rush Link
-                  の使い方とページ導線をわかりやすくまとめています。
-                </p>
               </div>
 
-              <div className="hero-card rounded-[2rem] p-5 md:p-6">
-                <div className="space-y-4">
-                  <p className="display text-sm text-[var(--accent-soft)]">Why This Page Works</p>
-                  <h2 className="text-2xl font-bold tracking-tight text-white">
-                    スト6の対戦募集で探しやすいこと
-                  </h2>
-                  <div className="space-y-3">
-                    {[
-                      "対戦相手を探したい",
-                      "教えてほしい相手を探したい",
-                      "リプレイIDから相談したい",
-                    ].map((item) => (
-                      <div
-                        key={item}
-                        className="rounded-[1.35rem] border border-white/10 bg-white/6 px-4 py-3 text-sm text-white/82"
-                      >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-3">
-          {featureCards.map((feature) => (
-            <article key={feature.title} className="panel rounded-[28px] px-5 py-5 md:px-6">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">{feature.title}</h2>
-                <p className="text-sm leading-7 text-[var(--muted)]">{feature.description}</p>
-                <ul className="space-y-2 text-sm leading-7 text-white/82">
-                  {feature.points.map((point) => (
-                    <li key={point} className="rounded-[1rem] border border-white/10 bg-white/6 px-3 py-2">
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </article>
-          ))}
-        </section>
-
-        <section className="panel rounded-[30px] px-6 py-6 md:px-8 md:py-8">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.85fr)]">
-            <SectionHeading
-              kicker="Search Intent"
-              title="スト6で対戦相手を探す時によくある悩み"
-              description="SNSでは投稿が流れやすく、条件が合う相手を見つけにくいことがあります。Rush Link では、対戦募集を見る導線と、教えてほしい・相談したい導線を分けて探しやすくしています。"
-            />
-
-            <div className="space-y-3">
-              {[
-                "対戦募集の投稿がすぐ流れて見つけ直しにくい",
-                "同じくらいの強さや目的の相手を探しにくい",
-                "対戦後にリプレイの相談までつなげにくい",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[1.45rem] border border-white/10 bg-white/6 px-4 py-4 text-sm leading-7 text-white/82"
-                >
-                  {item}
-                </div>
-              ))}
+              <RouteMap />
             </div>
           </div>
         </section>
 
         <section className="space-y-6">
           <SectionHeading
-            kicker="How To Start"
-            title="このLPから進むおすすめの順番"
-            description="検索でこのページに入った人が迷わないように、最初の動線を3段階でまとめています。"
+            kicker="Three Routes"
+            title="使い方を3枚で把握できる構成"
+            description="長い説明を読む代わりに、どの入口から使うかをカードで見分けられるようにしました。"
           />
 
           <div className="grid gap-4 md:grid-cols-3">
-            {steps.map((step) => (
-              <article key={step.title} className="panel rounded-[28px] px-5 py-5 md:px-6">
-                <h3 className="text-lg font-semibold text-white">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{step.description}</p>
+            {routes.map((route) => (
+              <article key={route.title} className="lp-visual-card">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/50">{route.label}</p>
+                    <h3 className="mt-2 text-xl font-semibold text-white">{route.title}</h3>
+                  </div>
+                  <route.Icon />
+                </div>
+                <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{route.description}</p>
               </article>
             ))}
           </div>
         </section>
 
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(320px,1.05fr)]">
+          <div className="panel rounded-[30px] px-6 py-6 md:px-8 md:py-8">
+            <div className="space-y-6">
+              <SectionHeading
+                kicker="Quick Comparison"
+                title="SNSより見やすい点を表で整理"
+                description="どこが違うのかを文章ではなく比較表で確認できるようにしています。"
+              />
+
+              <div className="overflow-hidden rounded-[1.6rem] border border-white/10">
+                <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(110px,0.8fr)_minmax(120px,0.9fr)] bg-white/6 text-xs uppercase tracking-[0.2em] text-white/54">
+                  <div className="px-4 py-3">見たいこと</div>
+                  <div className="px-4 py-3">SNS</div>
+                  <div className="px-4 py-3">Rush Link</div>
+                </div>
+                {compareRows.map((row) => (
+                  <div
+                    key={row.topic}
+                    className="grid grid-cols-[minmax(0,1.2fr)_minmax(110px,0.8fr)_minmax(120px,0.9fr)] border-t border-white/10 bg-[rgba(255,255,255,0.03)] text-sm"
+                  >
+                    <div className="px-4 py-4 text-white/82">{row.topic}</div>
+                    <div className="px-4 py-4 text-white/54">{row.social}</div>
+                    <div className="px-4 py-4 text-[var(--accent-soft)]">{row.rushLink}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <BoardPreview />
+        </section>
+
         <section className="panel rounded-[30px] px-6 py-6 md:px-8 md:py-8">
           <div className="space-y-6">
             <SectionHeading
-              kicker="FAQ"
-              title="スト6の対戦募集ページについてよくある質問"
-              description="検索流入の人が気にしやすいポイントを、短く確認できるようにしています。"
+              kicker="How To Start"
+              title="最初の動きは3ステップだけ"
+              description="入ってきた人が迷わないように、使い始めの順番を短くまとめています。"
             />
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {faqs.map((item) => (
-                <article key={item.question} className="rounded-[1.6rem] border border-white/10 bg-white/6 px-5 py-5">
-                  <h3 className="text-lg font-semibold text-white">{item.question}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{item.answer}</p>
+            <div className="grid gap-4 md:grid-cols-3">
+              {steps.map((item) => (
+                <article key={item.step} className="lp-step-card">
+                  <div className="lp-step-badge">{item.step}</div>
+                  <h3 className="mt-5 text-xl font-semibold text-white">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{item.description}</p>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="panel rounded-[30px] px-6 py-6 md:px-8 md:py-8">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <div className="space-y-3">
-              <p className="display text-sm text-[var(--accent-soft)]">Next Step</p>
-              <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
-                スト6の対戦募集を見に行く
-              </h2>
-              <p className="max-w-3xl text-sm leading-7 text-[var(--muted)] md:text-base">
-                まずは募集一覧を見て、今どんな投稿が出ているか確認できます。教えてほしい相手を探したい場合や、
-                リプレイIDで相談したい場合も関連ページから進めます。
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/board" className="primary-action w-auto min-w-[13rem]">
-                対戦募集一覧へ
-              </Link>
-              <Link href="/replay-review" className="secondary-action min-w-[11rem]">
-                リプレイ相談へ
-              </Link>
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.9fr)]">
+          <div className="panel rounded-[30px] px-6 py-6 md:px-8 md:py-8">
+            <div className="space-y-6">
+              <SectionHeading
+                kicker="FAQ"
+                title="よくある確認だけ残す"
+                description="FAQは短くして、最初に気になる点だけを拾えるようにしました。"
+              />
+
+              <div className="grid gap-4">
+                {faqs.map((item) => (
+                  <article
+                    key={item.question}
+                    className="rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-5"
+                  >
+                    <h3 className="text-lg font-semibold text-white">{item.question}</h3>
+                    <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{item.answer}</p>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
+
+          <section className="panel rounded-[30px] px-6 py-6 md:px-8 md:py-8">
+            <div className="space-y-5">
+              <p className="display text-sm text-[var(--accent-soft)]">Next Step</p>
+              <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                まずは一覧を開く
+              </h2>
+              <p className="text-sm leading-7 text-[var(--muted)] md:text-base">
+                いちばん情報量が多いのは募集一覧です。雰囲気をつかんだあと、必要なら登録や相談に進めます。
+              </p>
+
+              <div className="rounded-[1.8rem] border border-white/10 bg-[rgba(7,14,21,0.62)] p-4">
+                <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+                  <span className="text-sm font-semibold text-white">募集一覧</span>
+                  <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs text-white/64">
+                    最初に見るページ
+                  </span>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {["対戦募集を見る", "教わりたい募集を見る", "リプレイ相談へ進む"].map((item) => (
+                    <div
+                      key={item}
+                      className="rounded-[1rem] border border-white/10 bg-white/6 px-4 py-3 text-sm text-white/78"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href="/board" className="primary-action w-auto min-w-[13rem]">
+                  対戦募集一覧へ
+                </Link>
+                <Link href="/replay-review" className="secondary-action min-w-[11rem]">
+                  リプレイ相談へ
+                </Link>
+              </div>
+            </div>
+          </section>
         </section>
       </section>
     </main>
