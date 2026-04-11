@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
-const siteDescription =
-  "Street Fighter 6 でMR帯別の対戦募集、教えたい / 教わりたい募集、リプレイIDを使ったコーチング相談まで扱うコミュニティーです。";
+import { SITE_BETA_NOTE, SITE_DESCRIPTION } from "@/lib/site";
 
 export function SiteFooter() {
   return (
@@ -21,12 +19,8 @@ export function SiteFooter() {
               Beta
             </span>
           </div>
-          <p className="max-w-2xl text-sm leading-7 text-[var(--muted)]">
-            {siteDescription}
-          </p>
-          <p className="text-xs leading-6 text-[var(--muted)]">
-            現在はプレリリース版です。気になった点や欲しい機能は要望フォームから送ってください。
-          </p>
+          <p className="max-w-2xl text-sm leading-7 text-[var(--muted)]">{SITE_DESCRIPTION}</p>
+          <p className="text-xs leading-6 text-[var(--muted)]">{SITE_BETA_NOTE}</p>
         </div>
 
         <nav className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">

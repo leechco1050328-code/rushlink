@@ -1,5 +1,6 @@
 import { BrandPageHeader } from "@/components/brand-page-header";
 import { FeedbackForm } from "@/components/feedback-form";
+import { SITE_BETA_NOTE } from "@/lib/site";
 
 export default function FeedbackPage() {
   return (
@@ -11,7 +12,7 @@ export default function FeedbackPage() {
           backHref="/"
           kicker="Beta Feedback"
           title="要望フォーム"
-          description="Rush Link は現在プレリリース版です。使いづらい点、不具合、追加してほしい機能をここから送れます。"
+          description={SITE_BETA_NOTE}
         />
 
         <FeedbackForm />

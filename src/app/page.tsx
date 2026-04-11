@@ -2,12 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { AdSenseSlot } from "@/components/adsense-slot";
 import { CommunityBoard } from "@/components/community-board";
+import { CommunityPulse } from "@/components/community-pulse";
 import { ReplayReviewBoard } from "@/components/replay-review-board";
 import { SiteNav } from "@/components/site-nav";
 import { getAdSenseMidSlot, getAdSenseTopSlot } from "@/lib/adsense";
-
-const siteDescription =
-  "Street Fighter 6 でMR帯別の対戦募集、教えたい / 教わりたい募集、リプレイIDを使ったコーチング相談まで扱うコミュニティーです。";
+import { SITE_BETA_NOTE, SITE_DESCRIPTION } from "@/lib/site";
 
 type SectionTitleProps = {
   kicker: string;
@@ -19,12 +18,8 @@ function SectionTitle({ kicker, title, description }: SectionTitleProps) {
   return (
     <div className="max-w-3xl space-y-3">
       <p className="display text-sm text-[var(--accent-soft)]">{kicker}</p>
-      <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
-        {title}
-      </h2>
-      <p className="text-sm leading-7 text-[var(--muted)] md:text-base">
-        {description}
-      </p>
+      <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h2>
+      <p className="text-sm leading-7 text-[var(--muted)] md:text-base">{description}</p>
     </div>
   );
 }
@@ -55,7 +50,7 @@ export default function Home() {
                     Beta
                   </span>
                 </div>
-                <p className="max-w-2xl text-sm leading-7 text-white/72">{siteDescription}</p>
+                <p className="max-w-2xl text-sm leading-7 text-white/72">{SITE_DESCRIPTION}</p>
               </div>
               <SiteNav invert />
             </header>
@@ -70,24 +65,27 @@ export default function Home() {
                   NEXT SET
                 </h1>
                 <p className="max-w-2xl text-balance text-base leading-8 text-white/78 md:text-lg">
-                  {siteDescription}
+                  {SITE_DESCRIPTION}
                 </p>
+                <p className="max-w-2xl text-sm leading-7 text-white/60">{SITE_BETA_NOTE}</p>
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/auth" className="primary-action w-auto min-w-[13rem]">
-                  登録フォームを見る
+                <Link href="/board" className="primary-action w-auto min-w-[13rem]">
+                  募集中の投稿を見る
                 </Link>
                 <Link
-                  href="/feedback"
+                  href="/auth"
                   className="pill-button min-h-[3.2rem] min-w-[11rem] rounded-full border border-white/18 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] transition-colors hover:bg-white/14"
                 >
-                  要望フォームへ
+                  ユーザー登録
                 </Link>
               </div>
             </div>
           </div>
         </section>
+
+        <CommunityPulse />
 
         {topAdSlot ? (
           <section className="pt-2">
@@ -98,7 +96,7 @@ export default function Home() {
         <section id="board" className="space-y-8 pt-4">
           <SectionTitle
             kicker="Community Board"
-            title="対戦募集と教えたい / 教わりたいをまとめて探す"
+            title="対戦相手や教えてほしい相手をまとめて探す"
             description="募集目的と対象キャラクターで絞り込みできます。ホームでは新着5件だけを表示し、続きは一覧ページで確認できます。"
           />
 
@@ -108,8 +106,8 @@ export default function Home() {
         <section id="replay-review" className="space-y-8 pt-6">
           <SectionTitle
             kicker="Replay Coaching"
-            title="リプレイIDから相談できるコーチングボード"
-            description="ゲーム内のリプレイIDを使って、立ち回りやセットプレイの相談ができます。ホームでは新着5件だけを表示します。"
+            title="リプレイIDから立ち回りとセットプレイを詰める"
+            description="ゲーム内のリプレイIDを使って相談できるボードです。ホームでは新着5件だけを表示し、続きは一覧ページで確認できます。"
           />
 
           <ReplayReviewBoard listLimit={5} listPageHref="/replay-review" />

@@ -41,13 +41,9 @@ export function BrandPageHeader({
               Beta
             </span>
           </div>
-          {kicker ? (
-            <p className="display text-sm text-[var(--accent-soft)]">{kicker}</p>
-          ) : null}
+          {kicker ? <p className="display text-sm text-[var(--accent-soft)]">{kicker}</p> : null}
           <div className="space-y-3">
-            <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
-              {title}
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h1>
             <p className="max-w-3xl text-sm leading-7 text-[var(--muted)] md:text-base">
               {description}
             </p>
