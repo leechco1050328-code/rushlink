@@ -172,15 +172,36 @@ function matchesPostFilters(
   return true;
 }
 
-function shuffleSamples(posts: CommunitySamplePost[]) {
-  const nextPosts = [...posts];
+function getTokyoDateKey() {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
 
-  for (let index = nextPosts.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
-    [nextPosts[index], nextPosts[randomIndex]] = [nextPosts[randomIndex], nextPosts[index]];
+function getNextTokyoMidnightDelay() {
+  const now = new Date();
+  const tokyoNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+  const nextTokyoMidnight = new Date(tokyoNow);
+  nextTokyoMidnight.setHours(24, 0, 0, 0);
+  return nextTokyoMidnight.getTime() - tokyoNow.getTime();
+}
+
+function getDailySampleScore(post: CommunitySamplePost, dateKey: string) {
+  const seed = `${dateKey}:${post.source}:${post.id}`;
+  let hash = 0;
+
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) % 2147483647;
   }
 
-  return nextPosts;
+  return hash;
+}
+
+function sortSamplesForDay(posts: CommunitySamplePost[], dateKey: string) {
+  return [...posts].sort((left, right) => getDailySampleScore(left, dateKey) - getDailySampleScore(right, dateKey));
 }
 
 type CommunityBoardProps = {
@@ -210,6 +231,7 @@ export function CommunityBoard({
   const [form, setForm] = useState<UnifiedForm>(defaultForm);
   const [purposeFilter, setPurposeFilter] = useState<FilterPurpose>("すべて");
   const [characterFilter, setCharacterFilter] = useState("すべて");
+  const [sampleRotationKey, setSampleRotationKey] = useState(() => getTokyoDateKey());
   const [, setMessage] = useState("ログインすると投稿できます。");
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -253,8 +275,8 @@ export function CommunityBoard({
       matchesPostFilters(post, blockedUserIds, purposeFilter, characterFilter),
     );
 
-    return shuffleSamples(matchedSamples).slice(0, 5);
-  }, [blockedUserIds, characterFilter, purposeFilter]);
+    return sortSamplesForDay(matchedSamples, sampleRotationKey).slice(0, 5);
+  }, [blockedUserIds, characterFilter, purposeFilter, sampleRotationKey]);
   const displayedPosts = useMemo(() => {
     if (pageSize) {
       if (clampedPage !== totalPages) {
@@ -272,6 +294,14 @@ export function CommunityBoard({
 
     return [...visiblePosts, ...selectedSamplePosts];
   }, [clampedPage, listLimit, pageSize, selectedSamplePosts, totalPages, visiblePosts]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setSampleRotationKey(getTokyoDateKey());
+    }, getNextTokyoMidnightDelay());
+
+    return () => window.clearTimeout(timeoutId);
+  }, [sampleRotationKey]);
 
   useEffect(() => {
     if (!supabase) {
