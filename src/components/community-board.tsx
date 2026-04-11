@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
@@ -7,6 +7,10 @@ import { CharacterChip } from "@/components/character-chip";
 import { ModerationActions } from "@/components/moderation-actions";
 import { PostContactChips } from "@/components/post-contact-chips";
 import { CHARACTER_OPTIONS } from "@/lib/characters";
+import {
+  COMMUNITY_SAMPLE_POSTS,
+  type CommunitySamplePost,
+} from "@/lib/community-sample-posts";
 import { hasSavedProfile } from "@/lib/has-saved-profile";
 import { getBlockedUserIds, isBannedUser } from "@/lib/moderation";
 import { loadProfileContacts, type ProfileContactMap } from "@/lib/profile-contacts";
@@ -94,6 +98,7 @@ type UnifiedPost = {
   body: string;
   status: string;
   created_at: string;
+  isSample?: boolean;
 };
 
 const defaultForm: UnifiedForm = {
@@ -144,6 +149,38 @@ function formatAvailability(start: string, end: string) {
 
 function buildPageHref(baseHref: string, page: number) {
   return `${baseHref}?page=${page}`;
+}
+
+function matchesPostFilters(
+  post: UnifiedPost | CommunitySamplePost,
+  blockedUserIds: string[],
+  purposeFilter: FilterPurpose,
+  characterFilter: string,
+) {
+  if (!post.isSample && blockedUserIds.includes(post.user_id)) {
+    return false;
+  }
+
+  if (purposeFilter !== "すべて" && post.purpose !== purposeFilter) {
+    return false;
+  }
+
+  if (characterFilter !== "すべて" && post.character_name !== characterFilter) {
+    return false;
+  }
+
+  return true;
+}
+
+function shuffleSamples(posts: CommunitySamplePost[]) {
+  const nextPosts = [...posts];
+
+  for (let index = nextPosts.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [nextPosts[index], nextPosts[randomIndex]] = [nextPosts[randomIndex], nextPosts[index]];
+  }
+
+  return nextPosts;
 }
 
 type CommunityBoardProps = {
@@ -211,6 +248,30 @@ export function CommunityBoard({
     return filteredPosts;
   }, [clampedPage, filteredPosts, listLimit, pageSize]);
   const hasMorePosts = listLimit ? filteredPosts.length > listLimit : false;
+  const selectedSamplePosts = useMemo(() => {
+    const matchedSamples = COMMUNITY_SAMPLE_POSTS.filter((post) =>
+      matchesPostFilters(post, blockedUserIds, purposeFilter, characterFilter),
+    );
+
+    return shuffleSamples(matchedSamples).slice(0, 5);
+  }, [blockedUserIds, characterFilter, purposeFilter]);
+  const displayedPosts = useMemo(() => {
+    if (pageSize) {
+      if (clampedPage !== totalPages) {
+        return visiblePosts;
+      }
+
+      const remainingSlots = Math.max(0, pageSize - visiblePosts.length);
+      return [...visiblePosts, ...selectedSamplePosts.slice(0, Math.min(remainingSlots, 5))];
+    }
+
+    if (listLimit) {
+      const remainingSlots = Math.max(0, listLimit - visiblePosts.length);
+      return [...visiblePosts, ...selectedSamplePosts.slice(0, Math.min(remainingSlots, 5))];
+    }
+
+    return [...visiblePosts, ...selectedSamplePosts];
+  }, [clampedPage, listLimit, pageSize, selectedSamplePosts, totalPages, visiblePosts]);
 
   useEffect(() => {
     if (!supabase) {
@@ -912,7 +973,7 @@ export function CommunityBoard({
           </div>
           <div className="flex items-center gap-3">
             <span className="pill-button rounded-full bg-white/8 px-3 py-2 text-xs text-[var(--muted)]">
-              {filteredPosts.length} 件
+              {displayedPosts.length} 件
             </span>
             {listPageHref ? (
               <Link
@@ -960,15 +1021,15 @@ export function CommunityBoard({
 
         {isLoading ? (
           <p className="mt-6 text-sm text-[var(--muted)]">一覧を読み込み中...</p>
-        ) : filteredPosts.length === 0 ? (
+        ) : displayedPosts.length === 0 ? (
           <div className="mt-6 rounded-[24px] border border-white/10 bg-black/20 p-5 text-sm leading-7 text-[var(--muted)]">
             条件に合う投稿はまだありません。
           </div>
         ) : (
           <>
             <div className={`mt-6 grid gap-4 ${cardGridClass}`}>
-              {visiblePosts.map((post) => {
-                const isOwner = session?.user?.id === post.user_id;
+              {displayedPosts.map((post) => {
+                const isOwner = !post.isSample && session?.user?.id === post.user_id;
                 const detailHref =
                   post.source === "recruitment_posts"
                     ? `/board/recruitment/${post.id}`
@@ -991,20 +1052,29 @@ export function CommunityBoard({
                           >
                             {post.purpose}
                           </span>
+                          {post.isSample ? (
+                            <span className="pill-button rounded-full border border-[var(--secondary)]/35 bg-[var(--secondary)]/12 px-3 py-2 text-xs text-[var(--secondary)]">
+                              サンプル
+                            </span>
+                          ) : null}
                           <CharacterChip name={post.character_name} />
                         </div>
 
                         <h3 className="text-xl font-semibold text-white">{post.title}</h3>
                         <p className="text-sm text-[var(--muted)]">
-                          <Link
-                            href={`/players/${post.user_id}`}
-                            className="text-[var(--accent-soft)] underline underline-offset-4"
-                          >
-                            {post.author_name}
-                          </Link>{" "}
+                          {post.isSample ? (
+                            <span className="text-[var(--accent-soft)]">{post.author_name}</span>
+                          ) : (
+                            <Link
+                              href={`/players/${post.user_id}`}
+                              className="text-[var(--accent-soft)] underline underline-offset-4"
+                            >
+                              {post.author_name}
+                            </Link>
+                          )}{" "}
                           / {formatAvailability(post.availability_start, post.availability_end)}
                         </p>
-                        <PostContactChips userId={post.user_id} contacts={contacts} />
+                        {!post.isSample ? <PostContactChips userId={post.user_id} contacts={contacts} /> : null}
                         <p className="text-sm text-[var(--muted)]">
                           自分のランク: {post.self_rank || "未設定"}
                           {post.self_rank === "マスター" && post.self_mr
@@ -1037,13 +1107,19 @@ export function CommunityBoard({
 
                         <p className="text-xs text-[var(--muted)]/80">投稿日: {formatPostedAt(post.created_at)}</p>
 
-                        <Link
-                          href={detailHref}
-                          className="mt-4 flex items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--muted)] transition-colors hover:bg-white/8"
-                        >
-                          <span>タップ / クリックで詳細を見る</span>
-                          <span className="text-[var(--accent-soft)]">→</span>
-                        </Link>
+                        {post.isSample ? (
+                          <div className="mt-4 rounded-[18px] border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--muted)]">
+                            サンプル投稿です
+                          </div>
+                        ) : (
+                          <Link
+                            href={detailHref}
+                            className="mt-4 flex items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--muted)] transition-colors hover:bg-white/8"
+                          >
+                            <span>タップ / クリックで詳細を見る</span>
+                            <span className="text-[var(--accent-soft)]">→</span>
+                          </Link>
+                        )}
                       </div>
 
                       {isOwner ? (
@@ -1062,7 +1138,7 @@ export function CommunityBoard({
 
                     <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{post.body}</p>
 
-                    {!isOwner ? (
+                    {!isOwner && !post.isSample ? (
                       <ModerationActions
                         targetUserId={post.user_id}
                         targetName={post.author_name}
@@ -1110,3 +1186,4 @@ export function CommunityBoard({
     </div>
   );
 }
+
