@@ -25,6 +25,12 @@ export function SiteFooter() {
 
         <nav className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
           <Link
+            href="/street-fighter-6-taisen-boshu"
+            className="pill-button rounded-full border border-white/15 bg-white/5 px-4 py-2 transition-colors hover:bg-white/10"
+          >
+            スト6対戦募集
+          </Link>
+          <Link
             href="/feedback"
             className="pill-button rounded-full border border-white/15 bg-white/5 px-4 py-2 transition-colors hover:bg-white/10"
           >

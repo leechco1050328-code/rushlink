@@ -81,6 +81,16 @@ export default function Home() {
                   ユーザー登録
                 </Link>
               </div>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-white/64">
+                スト6の対戦相手を探している人は{" "}
+                <Link
+                  href="/street-fighter-6-taisen-boshu"
+                  className="text-[var(--accent-soft)] underline underline-offset-4"
+                >
+                  スト6対戦募集の案内ページ
+                </Link>
+                {" "}も確認できます。
+              </p>
             </div>
           </div>
         </section>
