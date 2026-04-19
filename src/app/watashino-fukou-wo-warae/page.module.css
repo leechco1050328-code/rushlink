@@ -1,0 +1,463 @@
+.pageShell {
+  min-height: 100vh;
+  padding: 24px 0 40px;
+  background: #f6f8f6;
+  color: #333333;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 300px;
+  gap: 24px;
+  width: min(1360px, calc(100% - 32px));
+  margin: 0 auto;
+  align-items: start;
+}
+
+.leftRail,
+.centerColumn,
+.rightRail {
+  display: grid;
+  gap: 16px;
+}
+
+.railCard,
+.feedColumn {
+  background: #ffffff;
+  border: 1px solid #e4e8e1;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 15, 0.04);
+}
+
+.railCard {
+  padding: 18px;
+}
+
+.feedColumn {
+  padding: 20px;
+}
+
+.cardLabel {
+  margin: 0;
+  color: #6d726d;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroTitle,
+.topicHeading,
+.feedHeading,
+.sideHeading {
+  margin: 10px 0 0;
+  font-size: 1.15rem;
+  line-height: 1.55;
+}
+
+.introText,
+.topicBody,
+.feedHeroText,
+.feedSummary,
+.ruleList li,
+.rankingMeta,
+.postBody {
+  color: #6d726d;
+  line-height: 1.75;
+}
+
+.introText {
+  margin-top: 12px;
+  font-size: 0.94rem;
+}
+
+.introActions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.primaryButton,
+.ghostButton,
+.railLink,
+.feedTab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font: inherit;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.primaryButton {
+  border: 1px solid transparent;
+  color: #ffffff;
+  background: #55c500;
+}
+
+.primaryButton:hover {
+  background: #3ea000;
+}
+
+.ghostButton {
+  border: 1px solid #d8ddd4;
+  color: #333333;
+  background: #ffffff;
+}
+
+.ghostButton:hover {
+  background: #f7f9f6;
+}
+
+.railLinks {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.railLink {
+  justify-content: flex-start;
+  border: 1px solid transparent;
+  color: #333333;
+  background: transparent;
+}
+
+.railLink:hover {
+  background: #f7f9f6;
+}
+
+.railLinkActive {
+  color: #3ea000;
+  background: #eef8e5;
+}
+
+.backLinkCard {
+  padding: 0 6px;
+}
+
+.backLink {
+  color: #6d726d;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.featuredTopic {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 20px;
+  align-items: end;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbf8 100%);
+}
+
+.topicTitle {
+  margin: 12px 0 8px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.featuredTopicAction {
+  display: flex;
+  align-items: end;
+}
+
+.feedHero {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e4e8e1;
+}
+
+.feedHeroText {
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.feedToolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.feedTab {
+  min-height: 36px;
+  border: 1px solid #e4e8e1;
+  border-radius: 999px;
+  color: #6d726d;
+  background: #ffffff;
+}
+
+.feedTab:hover {
+  border-color: #d8ddd4;
+  color: #333333;
+}
+
+.feedTabActive {
+  color: #ffffff;
+  border-color: #55c500;
+  background: #55c500;
+}
+
+.feedBlock + .feedBlock {
+  margin-top: 28px;
+}
+
+.feedBlockHeader {
+  margin-top: 18px;
+}
+
+.feedBlockTitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.feedSummary {
+  margin: 6px 0 0;
+  font-size: 0.92rem;
+}
+
+.feedList {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.postCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid #e4e8e1;
+}
+
+.postMain {
+  min-width: 0;
+}
+
+.postUserLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: #6d726d;
+  font-size: 0.86rem;
+}
+
+.postAvatar {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #3ea000;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #eef8e5;
+}
+
+.metaPill,
+.reactionPill,
+.tagChip,
+.thumbLabel {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.metaPill {
+  min-height: 26px;
+  padding: 0 10px;
+  color: #6d726d;
+  background: #f7f9f6;
+  border: 1px solid #e4e8e1;
+}
+
+.postTitle {
+  margin: 10px 0 0;
+  font-size: 1.06rem;
+  line-height: 1.65;
+}
+
+.postBody {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+}
+
+.postTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tagChip {
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  color: #6d726d;
+  background: #f5f7f4;
+  border: 1px solid #e4e8e1;
+}
+
+.tagChip strong {
+  color: #3ea000;
+}
+
+.postFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.postReactions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reactionPill {
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  color: #6d726d;
+  background: #f7f9f6;
+  border: 1px solid #e4e8e1;
+}
+
+.postMeta,
+.postDate {
+  color: #6d726d;
+  font-size: 0.82rem;
+}
+
+.postThumb {
+  display: flex;
+  align-items: end;
+  justify-content: start;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid #e4e8e1;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.thumbLabel {
+  min-height: 24px;
+  padding: 0 8px;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.thumbNone {
+  background: linear-gradient(135deg, #fafcf9 0%, #eef3eb 100%);
+}
+
+.thumbNone .thumbLabel {
+  color: #6d726d;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #e4e8e1;
+}
+
+.thumbWarm {
+  background: linear-gradient(135deg, #f0c579 0%, #e07a5f 100%);
+}
+
+.thumbCool {
+  background: linear-gradient(135deg, #80a4b7 0%, #557c8f 100%);
+}
+
+.thumbNight {
+  background: linear-gradient(135deg, #71708f 0%, #49506e 100%);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.cardHeaderMeta,
+.cardHeaderLink {
+  color: #6d726d;
+  font-size: 0.84rem;
+}
+
+.cardHeaderLink:hover {
+  color: #3ea000;
+}
+
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.rankingList {
+  margin: 14px 0 0;
+  padding-left: 22px;
+}
+
+.rankingList li + li {
+  margin-top: 14px;
+}
+
+.rankingTitle {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.rankingMeta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+.ruleList {
+  margin: 14px 0 0;
+  padding-left: 18px;
+}
+
+.ruleList li + li {
+  margin-top: 10px;
+}
+
+@media (max-width: 1180px) {
+  .contentGrid {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .rightRail {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+    width: min(100% - 20px, 1360px);
+  }
+
+  .rightRail {
+    grid-template-columns: 1fr;
+  }
+
+  .featuredTopic,
+  .postCard {
+    grid-template-columns: 1fr;
+  }
+
+  .postFooter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
