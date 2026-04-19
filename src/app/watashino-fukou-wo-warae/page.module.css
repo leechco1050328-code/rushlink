@@ -244,6 +244,97 @@
   align-items: end;
 }
 
+.composerCard {
+  scroll-margin-top: 92px;
+}
+
+.noticeBox {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #e4e8e1;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+
+.noticeInfo {
+  color: #5f6b5a;
+  background: #f7f9f6;
+}
+
+.noticeSuccess {
+  color: #24603c;
+  background: #edf9f1;
+  border-color: #d4ebdc;
+}
+
+.noticeError {
+  color: #97504f;
+  background: #fff3f3;
+  border-color: #f0d7d7;
+}
+
+.composerForm {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.composerGrid {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.fieldBlock {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.fieldInput {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d8ddd4;
+  border-radius: 10px;
+  color: #333333;
+  font: inherit;
+  background: #ffffff;
+  outline: none;
+}
+
+.fieldInput:focus {
+  border-color: #88c75f;
+  box-shadow: 0 0 0 3px rgba(85, 197, 0, 0.12);
+}
+
+.fieldTextarea {
+  min-height: 150px;
+  padding: 14px;
+  resize: vertical;
+}
+
+.fieldHint,
+.composerMeta,
+.feedMetaLine {
+  color: #6d726d;
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.composerFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
 .feedHero {
   padding-bottom: 18px;
   border-bottom: 1px solid #e4e8e1;
@@ -252,6 +343,10 @@
 .feedHeroText {
   margin-top: 10px;
   font-size: 0.95rem;
+}
+
+.feedMetaLine {
+  margin: 8px 0 0;
 }
 
 .feedToolbar {
@@ -543,6 +638,10 @@
 
   .featuredTopic,
   .postCard {
+    grid-template-columns: 1fr;
+  }
+
+  .composerGrid {
     grid-template-columns: 1fr;
   }
 
