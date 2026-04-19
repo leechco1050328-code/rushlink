@@ -320,105 +320,121 @@ function renderPosts(list: Post[]) {
 
 export default function MishapLandingPage() {
   return (
-    <main className={styles.pageShell}>
-      <div className={styles.contentGrid}>
-        <aside className={styles.leftRail}>
-          <section className={styles.railCard}>
-            <p className={styles.cardLabel}>About</p>
-            <h1 className={styles.heroTitle}>笑ってほしい、日常の小さなやらかし。</h1>
-            <p className={styles.introText}>
-              自分の失敗だけを、短く置いていく共有所です。ログイン不要で匿名投稿できて、
-              画像は任意、テキストが主役。深刻すぎない不幸だけを集めて、ちょっと肩の力が抜ける場を目指します。
-            </p>
-            <div className={styles.introActions}>
-              <button type="button" className={styles.primaryButton}>
-                投稿する
-              </button>
-              <button type="button" className={styles.ghostButton}>
-                投稿ルール
-              </button>
-            </div>
-          </section>
+    <>
+      <header className={styles.siteHeader}>
+        <div className={styles.headerInner}>
+          <div className={styles.headerLeft}>
+            <Link href={routePath} className={styles.brand}>
+              <span className={styles.brandMark}>笑</span>
+              <span className={styles.brandText}>私の不幸を笑え</span>
+            </Link>
 
-          <section className={styles.railCard}>
-            <p className={styles.cardLabel}>Explore</p>
-            <div className={styles.railLinks}>
-              <a href="#trend" className={`${styles.railLink} ${styles.railLinkActive}`}>
+            <nav className={styles.headerNav} aria-label="ページ内ナビゲーション">
+              <a href="#trend" className={`${styles.navLink} ${styles.navLinkActive}`}>
                 Trend
               </a>
-              <a href="#trend" className={styles.railLink}>
+              <a href="#feed-popular" className={styles.navLink}>
                 人気
               </a>
-              <a href="#topics" className={styles.railLink}>
+              <a href="#topics" className={styles.navLink}>
                 お題
               </a>
-              <a href="#tags" className={styles.railLink}>
+              <a href="#tags" className={styles.navLink}>
                 タグ
               </a>
-            </div>
-          </section>
+            </nav>
+          </div>
 
-          <section className={styles.backLinkCard}>
-            <Link href="/" className={styles.backLink}>
-              Rush Link トップへ戻る
-            </Link>
-          </section>
-        </aside>
+          <div className={styles.headerActions}>
+            <button type="button" className={styles.primaryButton}>
+              投稿する
+            </button>
+          </div>
+        </div>
+      </header>
 
-        <section className={styles.centerColumn}>
-          <section className={`${styles.railCard} ${styles.featuredTopic}`} id="topics">
-            <div>
-              <p className={styles.cardLabel}>Weekly Theme</p>
-              <h2 className={styles.topicHeading}>今週のお題</h2>
-              <p className={styles.topicTitle}>持っていたのに忘れたもの</p>
-              <p className={styles.topicBody}>
-                エコバッグ、社員証、温めてもらった弁当。思い出すだけでちょっと悔しいやつ。
+      <main className={styles.pageShell}>
+        <div className={styles.contentGrid}>
+          <aside className={styles.leftRail}>
+            <section className={styles.railCard}>
+              <p className={styles.cardLabel}>About</p>
+              <h1 className={styles.heroTitle}>笑ってほしい、日常の小さなやらかし。</h1>
+              <p className={styles.introText}>
+                自分の失敗だけを、短く置いていく共有所です。ログイン不要で匿名投稿できて、
+                画像は任意、テキストが主役。深刻すぎない不幸だけを集めて、ちょっと肩の力が抜ける場を目指します。
               </p>
-            </div>
+              <div className={styles.introActions}>
+                <button type="button" className={styles.primaryButton}>
+                  投稿する
+                </button>
+                <button type="button" className={styles.ghostButton}>
+                  投稿ルール
+                </button>
+              </div>
+            </section>
 
-            <div className={styles.featuredTopicAction}>
-              <button type="button" className={styles.ghostButton}>
-                このお題で投稿
-              </button>
-            </div>
-          </section>
+            <section className={styles.railCard}>
+              <p className={styles.cardLabel}>Explore</p>
+              <div className={styles.railLinks}>
+                <a href="#trend" className={`${styles.railLink} ${styles.railLinkActive}`}>
+                  Trend
+                </a>
+                <a href="#feed-popular" className={styles.railLink}>
+                  人気
+                </a>
+                <a href="#topics" className={styles.railLink}>
+                  お題
+                </a>
+                <a href="#tags" className={styles.railLink}>
+                  タグ
+                </a>
+              </div>
+            </section>
 
-          <section className={styles.feedColumn} id="trend">
-            <header className={styles.feedHero}>
+            <section className={styles.backLinkCard}>
+              <Link href="/" className={styles.backLink}>
+                Rush Link トップへ戻る
+              </Link>
+            </section>
+          </aside>
+
+          <section className={styles.centerColumn}>
+            <section className={`${styles.railCard} ${styles.featuredTopic}`} id="topics">
               <div>
-                <p className={styles.cardLabel}>Trend</p>
-                <h2 className={styles.feedHeading}>今日よく読まれている不幸</h2>
-                <p className={styles.feedHeroText}>
-                  Qiitaのように整理して、でも空気はやわらかく。匿名で置かれた日常のやらかしを、
-                  今の温度感がわかる順に上から読めます。
+                <p className={styles.cardLabel}>Weekly Theme</p>
+                <h2 className={styles.topicHeading}>今週のお題</h2>
+                <p className={styles.topicTitle}>持っていたのに忘れたもの</p>
+                <p className={styles.topicBody}>
+                  エコバッグ、社員証、温めてもらった弁当。思い出すだけでちょっと悔しいやつ。
                 </p>
               </div>
-            </header>
 
-            <div className={styles.feedToolbar}>
-              {(["recommended", "new", "popular", "rising", "random"] as const).map((key) => (
-                <a
-                  key={key}
-                  href={`#feed-${key}`}
-                  className={`${styles.feedTab} ${key === "recommended" ? styles.feedTabActive : ""}`}
-                >
-                  {key === "recommended"
-                    ? "Trend"
-                    : key === "new"
-                      ? "新着"
-                      : key === "popular"
-                        ? "人気"
-                        : key === "rising"
-                          ? "急上昇"
-                          : "ランダム"}
-                </a>
-              ))}
-            </div>
+              <div className={styles.featuredTopicAction}>
+                <button type="button" className={styles.ghostButton}>
+                  このお題で投稿
+                </button>
+              </div>
+            </section>
 
-            {(Object.keys(posts) as FeedKey[]).map((key) => (
-              <section key={key} id={`feed-${key}`} className={styles.feedBlock}>
-                <div className={styles.feedBlockHeader}>
-                  <h3 className={styles.feedBlockTitle}>
+            <section className={styles.feedColumn} id="trend">
+              <header className={styles.feedHero}>
+                <div>
+                  <p className={styles.cardLabel}>Trend</p>
+                  <h2 className={styles.feedHeading}>今日よく読まれている不幸</h2>
+                  <p className={styles.feedHeroText}>
+                    Qiitaのように整理して、でも空気はやわらかく。匿名で置かれた日常のやらかしを、
+                    今の温度感がわかる順に上から読めます。
+                  </p>
+                </div>
+              </header>
+
+              <div className={styles.feedToolbar}>
+                {(["recommended", "new", "popular", "rising", "random"] as const).map((key) => (
+                  <a
+                    key={key}
+                    href={`#feed-${key}`}
+                    className={`${styles.feedTab} ${key === "recommended" ? styles.feedTabActive : ""}`}
+                  >
                     {key === "recommended"
                       ? "Trend"
                       : key === "new"
@@ -428,67 +444,85 @@ export default function MishapLandingPage() {
                           : key === "rising"
                             ? "急上昇"
                             : "ランダム"}
-                  </h3>
-                  <p className={styles.feedSummary}>{feedSummary[key]}</p>
+                  </a>
+                ))}
+              </div>
+
+              {(Object.keys(posts) as FeedKey[]).map((key) => (
+                <section key={key} id={`feed-${key}`} className={styles.feedBlock}>
+                  <div className={styles.feedBlockHeader}>
+                    <h3 className={styles.feedBlockTitle}>
+                      {key === "recommended"
+                        ? "Trend"
+                        : key === "new"
+                          ? "新着"
+                          : key === "popular"
+                            ? "人気"
+                            : key === "rising"
+                              ? "急上昇"
+                              : "ランダム"}
+                    </h3>
+                    <p className={styles.feedSummary}>{feedSummary[key]}</p>
+                  </div>
+                  <div className={styles.feedList}>{renderPosts(posts[key])}</div>
+                </section>
+              ))}
+            </section>
+          </section>
+
+          <aside className={styles.rightRail}>
+            <section className={styles.railCard} id="tags">
+              <div className={styles.cardHeader}>
+                <div>
+                  <p className={styles.cardLabel}>Tag Rankings</p>
+                  <h2 className={styles.sideHeading}>人気タグ</h2>
                 </div>
-                <div className={styles.feedList}>{renderPosts(posts[key])}</div>
-              </section>
-            ))}
-          </section>
-        </section>
-
-        <aside className={styles.rightRail}>
-          <section className={styles.railCard} id="tags">
-            <div className={styles.cardHeader}>
-              <div>
-                <p className={styles.cardLabel}>Tag Rankings</p>
-                <h2 className={styles.sideHeading}>人気タグ</h2>
+                <span className={styles.cardHeaderMeta}>Weekly</span>
               </div>
-              <span className={styles.cardHeaderMeta}>Weekly</span>
-            </div>
-            <div className={styles.tagCloud}>
-              {tagRanking.map(([tag, count]) => (
-                <span key={tag} className={styles.tagChip}>
-                  {tag}
-                  <strong>{count}</strong>
-                </span>
-              ))}
-            </div>
-          </section>
-
-          <section className={styles.railCard}>
-            <div className={styles.cardHeader}>
-              <div>
-                <p className={styles.cardLabel}>Post Rankings</p>
-                <h2 className={styles.sideHeading}>今日のランキング</h2>
-              </div>
-              <a href="#trend" className={styles.cardHeaderLink}>
-                もっと見る
-              </a>
-            </div>
-            <ol className={styles.rankingList}>
-              {rankingPosts.map((post) => (
-                <li key={post.title}>
-                  <span className={styles.rankingTitle}>{post.title}</span>
-                  <span className={styles.rankingMeta}>
-                    {post.category} / 反応 {post.score}
+              <div className={styles.tagCloud}>
+                {tagRanking.map(([tag, count]) => (
+                  <span key={tag} className={styles.tagChip}>
+                    {tag}
+                    <strong>{count}</strong>
                   </span>
-                </li>
-              ))}
-            </ol>
-          </section>
+                ))}
+              </div>
+            </section>
 
-          <section className={styles.railCard}>
-            <p className={styles.cardLabel}>Guideline</p>
-            <h2 className={styles.sideHeading}>投稿ルール</h2>
-            <ul className={styles.ruleList}>
-              <li>投稿できるのは、自分の失敗だけです。</li>
-              <li>深刻な事故や他人が傷つく内容は掲載できません。</li>
-              <li>写真は任意ですが、顔や個人情報が写るものはわからないように処理をしてください。</li>
-            </ul>
-          </section>
-        </aside>
-      </div>
-    </main>
+            <section className={styles.railCard}>
+              <div className={styles.cardHeader}>
+                <div>
+                  <p className={styles.cardLabel}>Post Rankings</p>
+                  <h2 className={styles.sideHeading}>今日のランキング</h2>
+                </div>
+                <a href="#trend" className={styles.cardHeaderLink}>
+                  もっと見る
+                </a>
+              </div>
+              <ol className={styles.rankingList}>
+                {rankingPosts.map((post) => (
+                  <li key={post.title}>
+                    <span className={styles.rankingTitle}>{post.title}</span>
+                    <span className={styles.rankingMeta}>
+                      {post.category} / 反応 {post.score}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section className={styles.railCard}>
+              <p className={styles.cardLabel}>Guideline</p>
+              <h2 className={styles.sideHeading}>投稿ルール</h2>
+              <ul className={styles.ruleList}>
+                <li>投稿できるのは、自分の失敗だけです。</li>
+                <li>深刻な事故や他人が傷つく内容は掲載できません。</li>
+                <li>写真は任意ですが、顔や個人情報が写るものはわからないように処理をしてください。</li>
+              </ul>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </>
   );
 }
